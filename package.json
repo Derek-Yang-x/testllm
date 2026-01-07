@@ -1,0 +1,36 @@
+{
+  "name": "testllm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@langchain/classic": "^1.0.8",
+    "@langchain/community": "^1.1.2",
+    "@langchain/core": "^1.1.9",
+    "@langchain/google-genai": "^2.1.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "langchain": "^1.2.4",
+    "mysql2": "^3.16.0",
+    "pg": "^8.16.3",
+    "typeorm": "^0.3.28",
+    "zod": "^4.3.5"
+  }
+}

@@ -1,0 +1,33 @@
+# Defaults
+node_modules/
+dist/
+build/
+.DS_Store
+
+# Environment
+.env
+*.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
