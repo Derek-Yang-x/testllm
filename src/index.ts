@@ -1,8 +1,11 @@
 import "dotenv/config";
 import express from "express";
+import path from "path";
 import { AppDataSource, db } from "./db.js";
-import { generateAntDCode, saveCodeToFile } from "./antd.js";
+import { generateAntDCode } from "./antd.js";
+import { saveCodeToFile } from "./utils.js";
 import { generateSqlQuery } from "./sql.js";
+import { generateSequelizeCode } from "./sequelize.js";
 
 const app = express();
 app.use(express.json());
@@ -21,13 +24,12 @@ async function startServer() {
       console.log("Params:", generated.params);
       console.log("-----------------------------");
 
-      // 6. Execute SQL Manually
       const dbResult = await AppDataSource.query(generated.sql, generated.params);
       
       res.json({
         question,
-        generated_sql: generated.sql,
-        generated_params: generated.params,
+        sql: generated.sql,
+        params: generated.params,
         result: dbResult
       });
     } catch (error) {
@@ -38,13 +40,15 @@ async function startServer() {
 
   app.post("/ask-antd", async (req, res) => {
     try {
-      const { question, system, filename } = req.body;
+      let { question, filename, modelContext } = req.body;
       if (!question) return res.status(400).send("Please provide a question.");
+
+      if (!modelContext) {
+        modelContext = await db.getTableInfo();
+      }
     
-      // 5. Generate AntD Code
-      const result = await generateAntDCode(question, system);
-      
-      // Save code to file
+      const result = await generateAntDCode(question, modelContext);
+
       const savedPath = filename || `output/antd-${Date.now()}.tsx`;
       await saveCodeToFile(result, savedPath);
 
@@ -52,6 +56,39 @@ async function startServer() {
         question,
         result,
         savedPath
+      });
+    } catch (error) {
+      console.error("Error in /ask-antd:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/ask-api", async (req, res) => {
+    try {
+      const { question } = req.body;
+      if (!question) return res.status(400).send("Please provide a question.");
+
+      const result = await generateSequelizeCode(question);
+      
+      const suggested = result.filename || `model-${Date.now()}.ts`;
+      const baseName = `output/${suggested}`;
+
+      await saveCodeToFile(result.modelCode, baseName);
+
+      const dir = path.dirname(baseName);
+      const ext = path.extname(baseName);
+      const name = path.basename(baseName, ext); // e.g. User
+      const controllerName = path.join(dir, `${name}.controller${ext || '.ts'}`);
+      
+      await saveCodeToFile(result.controllerCode, controllerName);
+
+      res.json({
+        question,
+        result,
+        savedPaths: {
+          model: baseName,
+          controller: controllerName
+        }
       });
     } catch (error) {
       console.error(error);
