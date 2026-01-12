@@ -5,6 +5,7 @@
 ## 功能特色
 
 - **自然語言轉 SQL**: 使用 Google Gemini 先進的 AI 模型將問題轉換為精確的 SQL。
+- **Ant Design 代碼生成**: 自動生成高品質的 Ant Design 5.0 React 組件代碼，並自動保存到 outputs 資料夾。
 - **安全性**: 使用參數化查詢 (Parameterized Queries) 來防止 SQL Injection 攻擊。
 - **結構化輸出**: 利用 Zod 定義輸出格式，確保 AI 生成的回應符合預期。
 - **TypeScript**: 完整的型別定義，開發維護更安全。
@@ -65,6 +66,27 @@ npm run dev
     { "id": 1, "name": "User A", "created_at": "..." },
     { "id": 2, "name": "User B", "created_at": "..." }
   ]
+}
+```
+
+### 生成 Ant Design 代碼
+
+**Endpoint**: `POST /ask-antd`
+
+**Request Body**:
+```json
+{
+  "question": "幫我生成一個用戶登入表單",
+  "filename": "output/MyLoginForm.tsx" // 可選，如果不填會自動生成檔名
+}
+```
+
+**Response Example**:
+```json
+{
+  "message": "Code generated and saved successfully",
+  "code": "...",
+  "savedPath": "output/MyLoginForm.tsx"
 }
 ```
 

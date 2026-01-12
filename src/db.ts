@@ -1,4 +1,5 @@
 import { DataSource } from "typeorm"
+import { SqlDatabase } from "@langchain/classic/sql_db";
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -13,3 +14,7 @@ export const AppDataSource = new DataSource({
   synchronize: false, // AI 專案建議設為 false，避免自動改表
   logging: true,
 })
+
+await AppDataSource.initialize();
+
+export const db = await SqlDatabase.fromDataSourceParams({ appDataSource: AppDataSource });

@@ -25,6 +25,7 @@ logs/
 
 # Testing
 coverage/
+output/
 
 # Runtime data
 pids
