@@ -1,10 +1,11 @@
+import "dotenv/config";
 import express from "express";
 import { z } from "zod";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { SqlDatabase } from "@langchain/classic/sql_db";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { AppDataSource } from "./db.js";
-
+import { generateAntDCode } from "./antd.js";
 const app = express();
 app.use(express.json());
 
@@ -82,6 +83,24 @@ async function startServer() {
         generated_sql: generated.sql,
         generated_params: generated.params,
         result: dbResult
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/ask-antd", async (req, res) => {
+    try {
+      const { question, system } = req.body;
+      if (!question) return res.status(400).send("Please provide a question.");
+    
+      // 5. Generate AntD Code
+      const result = await generateAntDCode(question, system);
+      
+      res.json({
+        question,
+        result
       });
     } catch (error) {
       console.error(error);
