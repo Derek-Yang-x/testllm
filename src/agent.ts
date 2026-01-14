@@ -3,12 +3,11 @@ import { z } from "zod";
 import { tool } from "@langchain/core/tools";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { StateGraph, MessagesAnnotation, MemorySaver } from "@langchain/langgraph";
-import { HumanMessage, BaseMessage, AIMessage } from "@langchain/core/messages";
-import { Command } from "@langchain/langgraph";
+import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import * as readline from "readline";
 
 import { llm } from "./llm.js";
-import { db, getSchema } from "./db.js";
+import { getSchema } from "./db.js";
 import { AppDataSource } from "./db.js";
 import { generateSqlQuery } from "./sql.js";
 import { generateSequelizeCode } from "./sequelize.js";

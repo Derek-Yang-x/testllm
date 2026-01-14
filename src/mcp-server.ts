@@ -2,6 +2,7 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { generateAntDPrompt } from "./antd.js";
 import { getRelevantSchema, initializeDb } from "./db.js";
 
 // Initialize MCP Server
@@ -131,6 +132,43 @@ server.registerTool(
   }
 );
 
+server.registerTool(
+  "generate-antd",
+  {
+    inputSchema: {
+      request: z.string().describe("Description of the UI component to generate"),
+      modelContext: z.string().optional().describe("Optional database schema context"),
+    },
+  },
+  async ({ request, modelContext }) => {
+    console.error(`[Tool: generate-antd] Processing request: ${request}`);
+    try {
+      const prompt = await generateAntDPrompt(request, modelContext);
+      
+      // Return the prompt text directly, DO NOT call LLM
+      return {
+        content: [
+          {
+            type: "text",
+            text: prompt,
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error generating AntD prompt:", error);
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Error generating prompt: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
 // Start the server
 async function runServer() {
   const transport = new StdioServerTransport();
@@ -143,15 +181,15 @@ async function runServer() {
   
   (async () => {
     for (let i = 0; i < MAX_RETRIES; i++) {
-        try {
-            await initializeDb();
-            console.error(`[${new Date().toISOString()}] ✅ Sequelize MCP Server: Database connected successfully!`);
-            console.error(`[${new Date().toISOString()}] 🚀 MCP Server is READY to accept requests.`);
-            return;
-        } catch (err) {
-            console.error(`Database connection failed (attempt ${i + 1}/${MAX_RETRIES}). Retrying in ${RETRY_DELAY}ms...`);
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-        }
+      try {
+        await initializeDb();
+        console.error(`[${new Date().toISOString()}] ✅ Sequelize MCP Server: Database connected successfully!`);
+        console.error(`[${new Date().toISOString()}] 🚀 MCP Server is READY to accept requests.`);
+        return;
+      } catch (err) {
+        console.error(`Database connection failed (attempt ${i + 1}/${MAX_RETRIES}). Retrying in ${RETRY_DELAY}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      }
     }
     console.error("Failed to connect to database after multiple attempts. MCP server functionality may be limited.");
   })();

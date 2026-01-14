@@ -15,8 +15,6 @@ export const AppDataSource = new DataSource({
   logging: false,
 })
 
-// await AppDataSource.initialize();
-
 // Cache for table info
 let cachedSchema: string | null = null;
 export let db: SqlDatabase;

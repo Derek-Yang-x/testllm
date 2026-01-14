@@ -1,74 +1,44 @@
 import "dotenv/config";
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { RunnableSequence, RunnablePassthrough } from "@langchain/core/runnables";
-import { StringOutputParser } from "@langchain/core/output_parsers";
-import { MemoryVectorStore } from "@langchain/classic/vectorstores/memory";
-import { llm as model } from "./llm.js";
 
-import { RecursiveCharacterTextSplitter } from "@langchain/classic/text_splitter";
-
-import { Document } from "@langchain/core/documents";
-
+// Reused helper for loading knowledge base
 async function loadPlainTextUrl(url: string) {
   try {
     const response = await fetch(url);
     const text = await response.text();
-
-    // 將純文字包裝成 LangChain 的 Document 物件
-    const doc = new Document({ pageContent: text, metadata: { source: url } });
-
-    const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
-    const splitDocs = await splitter.splitDocuments([doc]);
-
-    return await MemoryVectorStore.fromDocuments(splitDocs, new GoogleGenerativeAIEmbeddings({
-      apiKey: process.env.GOOGLE_API_KEY || "",
-      model: "text-embedding-004",
-    }));
+    return text;
   } catch (err) {
     console.error("Error loading docs from URL:", err);
     return null;
   }
 }
 
-// Initialize the knowledge base immediately (this may take a few seconds on startup)
-const antdVectorStorePromise = (async () => {
-  console.log("Initializing AntD Knowledge Base...");
+// Initialize knowledge base
+const antdContextPromise = (async () => {
+  console.log("[MCP] Initializing AntD Knowledge Base...");
   try {
     const url = "https://ant.design/llms-full.txt";
-    const store = await loadPlainTextUrl(url);
-    if (store) {
-      console.log("AntD Knowledge Base Ready.");
-      return store;
+    const text = await loadPlainTextUrl(url);
+    if (text) {
+      console.log("[MCP] AntD Knowledge Base Ready.");
+      return text;
     } else {
-      console.warn("AntD Knowledge Base failed to load. Proceeding without it.");
-      return null;
+      console.warn("[MCP] AntD Knowledge Base failed to load. Proceeding without it.");
+      return "";
     }
   } catch (err) {
-    console.error("Failed to initialize AntD Knowledge Base:", err);
-    return null;
+    console.error("[MCP] Failed to initialize AntD Knowledge Base:", err);
+    return "";
   }
 })();
 
-let cachedDefaultChain: RunnableSequence | null = null;
-
-export async function generateAntDCode(userInput: string, modelContext?: string) {
-  // We can't use cached chain if modelContext is provided, as it is dynamic context
-  if (!modelContext && cachedDefaultChain) {
-    return await cachedDefaultChain.invoke(userInput);
-  }
-
-  const store = await antdVectorStorePromise;
-  
-  // If store is available, use it as context. Otherwise use empty string.
-  const contextStep = store 
-    ? store.asRetriever().pipe((docs) => docs.map((d) => d.pageContent).join("\n"))
-    : () => "";
+export async function generateAntDPrompt(userInput: string, modelContext?: string): Promise<string> {
+  const context = await antdContextPromise;
 
   const defaultSystemPrompt = `你是一位資深的 Ant Design 5.0 專家。
     請參考以下技術文檔片段來生成代碼：
     ----------------
-    {context}
+    ${context.replace(/{/g, "{{").replace(/}/g, "}}")}
     ----------------
     
     ${modelContext ? `
@@ -83,26 +53,35 @@ export async function generateAntDCode(userInput: string, modelContext?: string)
     - 優先使用 ProComponents。
     - 只輸出代碼塊，不要解釋。`;
 
-  const prompt = ChatPromptTemplate.fromMessages([
+  const prompt = await ChatPromptTemplate.fromMessages([
     ["system", defaultSystemPrompt],
     ["human", "{input}"],
-  ]);
+  ]).format({ input: userInput });
+  
+  return prompt;
+}
 
-  // Construct the chain using LCEL
-  const chain = RunnableSequence.from([
-    {
-      context: contextStep,
-      input: new RunnablePassthrough(),
-    },
-    prompt,
-    model,
-    new StringOutputParser(),
-  ]);
-
-  // Cache the chain only if it's the pure default one without extra context AND store loaded successfully
-  if (!modelContext && store) {
-    cachedDefaultChain = chain;
+export async function generateAntDCode(userInput: string, modelContext?: string) {
+  // Use the new prompt generator logic
+  const promptStr = await generateAntDPrompt(userInput, modelContext);
+  
+  // Directly invoke LLM with the formatted prompt
+  // Since 'model' is likely a ChatOpenAI or similar LangChain object, we can invoke it with a string or messages.
+  // Although generateAntDPrompt returns a string (the formatted prompt), passing it as a single human message string is usually fine for chat models,
+  // OR we can reconstruct a simple message array if needed.
+  // However, 'model.invoke' typically accepts a string or BaseMessage[].
+  
+  // Let's create a simple chain: Prompt (String) -> LLM -> StringOutputParser
+  // But since promptStr is already the FINAL formatted string, we might just pass it.
+  
+  // Dynamically import llm to avoid initialization errors if API key is missing when only generating prompts
+  const { llm } = await import("./llm.js");
+  const result = await llm.invoke(promptStr);
+  
+  // Result is likely an AIMessage.
+  if (typeof result === 'string') return result;
+  if (Array.isArray(result.content)) {
+    return result.content.map((c: any) => c.text || '').join('');
   }
-
-  return await chain.invoke(userInput);
+  return result.content as string;
 }
