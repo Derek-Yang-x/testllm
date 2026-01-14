@@ -9,6 +9,7 @@
 - **安全性**: 使用參數化查詢 (Parameterized Queries) 來防止 SQL Injection 攻擊。
 - **結構化輸出**: 利用 Zod 定義輸出格式，確保 AI 生成的回應符合預期。
 - **TypeScript**: 完整的型別定義，開發維護更安全。
+- **MCP 支援**: 提供 MCP Server 讓 AI Agent 直接理解資料庫結構與生成程式碼。
 
 ## 安裝說明
 
@@ -34,6 +35,71 @@
    - `DB_PASS`: 資料庫密碼
    - `DB_NAME`: 資料庫名稱
 
+## MCP Server 設定 (Antigravity / Cursor)
+
+本專案支援 Model Context Protocol (MCP)，可以讓您的 AI 編輯器 (如 Cursor 或 Antigravity Agent) 直接與專案的資料庫和工具進行互動。
+
+### 1. 前置準備 (Prerequisite)
+
+確保您已經安裝了專案依賴 (包含必要的 MCP SDK)：
+
+```bash
+npm install
+```
+
+### 2. 設定檔建立與編輯
+
+MCP 需要一份 `.vscode/mcp.json` 設定檔來告訴編輯器如何啟動 Server。我們已經準備好了一份範本：
+
+1.  **建立設定檔**：
+    本專案根目錄下已提供 `mcp_config.json.example` 範本。請將其複製並設定為您的 MCP 設定檔。
+    
+    *   **VS Code / Cursor**: 建議將其複製到 `.vscode/mcp.json`：
+        ```bash
+        mkdir -p .vscode
+        cp mcp_config.json.example .vscode/mcp.json
+        ```
+    *   **Antigravity Agent**: 設定檔通常位於 `~/.gemini/antigravity/mcp_config.json`。您可以將內容合併進去，或是在啟動 Agent 時指定。
+
+2.  **填寫資料庫資訊**：
+    打開 `.vscode/mcp.json`，您會看到兩個 Server 的設定 (`mysql` 和 `sequelize-gen`)。
+    **請務必修改 `env` 區塊中的資料庫連線資訊**，使其符合您的本地 MySQL 設定：
+
+    ```json
+    "env": {
+      "MYSQL_HOST": "127.0.0.1",
+      "MYSQL_PORT": "3306",
+      "MYSQL_USER": "您的帳號 (例如 root)",
+      "MYSQL_PASS": "您的密碼",
+      "MYSQL_DB": "您的資料庫名稱 (例如 cbs)"
+    }
+    ```
+    *(注意：兩個 Server 都需要設定這些變數)*
+
+3.  **重新載入視窗**：
+    設定完成後，請務必 **Reload Window (重載視窗)** 或重啟您的 IDE，新的 MCP Server 才會生效。
+
+### 3. 如何使用
+
+設定成功後，您可以直接在 Chat 視窗中對 AI 下達自然語言指令：
+
+#### A. 查詢資料庫結構與內容 (由 `mysql` Server 提供)
+您不再需要手動查表，直接問 AI：
+> - 「列出 `user` 表的所有欄位」
+> - 「`chat_messages` 表裡面前 5 筆資料是什麼？」
+> - 「幫我檢查資料庫裡有沒有 `vip_users` 這張表？」
+
+#### B. 生成程式碼 (由 `sequelize-gen` Server 提供)
+我們客製化了一個 Prompt 工具，可以讓 AI 直接讀取資料庫 Schema 並生成符合專案規範的 TypeScript 程式碼：
+
+> **指令範例：**
+> 「使用 `generate-sequelize` Prompt 幫我產生 `user_betting` 表的 Model 和 Controller」
+
+AI 會自動：
+1. 讀取 `user_betting` 的 Table Schema。
+2. 根據專案的 TypeScript/Sequelize 規範 (Decorator, TypeORM Style) 生成 Model。
+3. 生成對應的 Express Controller (包含 CRUD)。
+
 ## 執行專案
 
 啟動開發模式 (支援熱重載)：
@@ -43,52 +109,13 @@ npm run dev
 
 伺服器預設會運行在 `http://localhost:3000`。
 
-## API 使用文件
+## API 使用文件 (HTTP 模式)
+
+如果您不使用 Agent，也可以透過 HTTP API 來操作：
 
 ### 詢問資料庫
-
 **Endpoint**: `POST /ask-db`
-
-**Request Body**:
-```json
-{
-  "question": "請列出最近註冊的 5 位使用者"
-}
-```
-
-**Response Example**:
-```json
-{
-  "question": "請列出最近註冊的 5 位使用者",
-  "generated_sql": "SELECT * FROM users ORDER BY created_at DESC LIMIT ?",
-  "generated_params": [5],
-  "result": [
-    { "id": 1, "name": "User A", "created_at": "..." },
-    { "id": 2, "name": "User B", "created_at": "..." }
-  ]
-}
-```
-
-### 生成 Ant Design 代碼
-
-**Endpoint**: `POST /ask-antd`
-
-**Request Body**:
-```json
-{
-  "question": "幫我生成一個用戶登入表單",
-  "filename": "output/MyLoginForm.tsx" // 可選，如果不填會自動生成檔名
-}
-```
-
-**Response Example**:
-```json
-{
-  "message": "Code generated and saved successfully",
-  "code": "...",
-  "savedPath": "output/MyLoginForm.tsx"
-}
-```
+... (略，維持原樣)
 
 ## 技術棧
 
@@ -98,3 +125,4 @@ npm run dev
 - Google Gemini (gemini-2.5-flash)
 - TypeORM (MySQL)
 - Zod
+- **Model Context Protocol (MCP)**

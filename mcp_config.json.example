@@ -1,0 +1,41 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/derekyang/testllm"
+      ]
+    },
+    "mysql": {
+      "command": "/Users/derekyang/.nvm/versions/node/v22.14.0/bin/node",
+      "args": [
+        "/Users/derekyang/testllm/node_modules/@benborla29/mcp-server-mysql/dist/index.js"
+      ],
+      "cwd": "/Users/derekyang/testllm",
+      "env": {
+        "MYSQL_HOST": "127.0.0.1",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "root",
+        "MYSQL_PASS": "passwd",
+        "MYSQL_DB": "cbs"
+      }
+    },
+    "sequelize-gen": {
+      "command": "/Users/derekyang/.nvm/versions/node/v22.14.0/bin/node",
+      "args": [
+        "/Users/derekyang/testllm/node_modules/.bin/tsx",
+        "/Users/derekyang/testllm/src/mcp-server.ts"
+      ],
+      "cwd": "/Users/derekyang/testllm",
+      "env": {
+        "DB_HOST": "127.0.0.1",
+        "DB_PORT": "3306",
+        "DB_USER": "root",
+        "DB_PASS": "passwd",
+        "DB_NAME": "cbs"
+      }
+    }
+  }
+}

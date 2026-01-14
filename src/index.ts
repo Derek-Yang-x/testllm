@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import path from "path";
-import { AppDataSource, db } from "./db.js";
+import { AppDataSource, getSchema, getRelevantSchema, initializeDb } from "./db.js";
 import { generateAntDCode } from "./antd.js";
 import { saveCodeToFile } from "./utils.js";
 import { generateSqlQuery } from "./sql.js";
@@ -11,13 +11,18 @@ const app = express();
 app.use(express.json());
 
 async function startServer() {
+
+  await initializeDb();
+
+  // Warm up the schema cache
+  await getSchema();
   
-  app.post("/ask-db", async (req, res) => {
+  app.post("/gen-sql", async (req, res) => {
     try {
       const { question } = req.body;
       if (!question) return res.status(400).send("Please provide a question.");
 
-      const generated = await generateSqlQuery(question, db);
+      const generated = await generateSqlQuery(question);
 
       console.log("Generated -------------------");
       console.log("SQL:", generated.sql);
@@ -38,13 +43,14 @@ async function startServer() {
     }
   });
 
-  app.post("/ask-antd", async (req, res) => {
+  app.post("/gen-antd", async (req, res) => {
     try {
       let { question, filename, modelContext } = req.body;
       if (!question) return res.status(400).send("Please provide a question.");
 
       if (!modelContext) {
-        modelContext = await db.getTableInfo();
+        const { schema } = await getRelevantSchema(question);
+        modelContext = schema;
       }
     
       const result = await generateAntDCode(question, modelContext);
@@ -63,7 +69,7 @@ async function startServer() {
     }
   });
 
-  app.post("/ask-api", async (req, res) => {
+  app.post("/gen-api", async (req, res) => {
     try {
       const { question } = req.body;
       if (!question) return res.status(400).send("Please provide a question.");

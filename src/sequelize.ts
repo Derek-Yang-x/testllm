@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { PromptTemplate } from "@langchain/core/prompts";
-import { db } from "./db.js";
+import { getRelevantSchema } from "./db.js";
 import { llm } from "./llm.js";
 
 // Define the schema for the output
@@ -37,6 +37,7 @@ Requirements:
   - **IMPORTANT**: When importing types (like Request, Response, NextFunction), use \`import type {{ ... }}\` syntax to satisfy 'verbatimModuleSyntax'.
   - Use \`req\`, \`res\`, \`next\` typed as \`Request\`, \`Response\`, \`NextFunction\` from 'express'.
   - Handle errors appropriately (try-catch).
+  - **Do NOT include any comments in the code.**
 
 User Request: {input}
 
@@ -50,13 +51,13 @@ const structuredLlm = llm.withStructuredOutput(SequelizeSchema);
 const promptTemplate = PromptTemplate.fromTemplate(SEQUELIZE_PROMPT_TEMPLATE);
 
 export async function generateSequelizeCode(question: string) {
-  const tableInfo = await db.getTableInfo();
+  const { schema, tables } = await getRelevantSchema(question);
 
   const prompt = await promptTemplate.format({
     input: question,
-    table_info: tableInfo,
+    table_info: schema,
   });
 
   const generated = await structuredLlm.invoke(prompt);
-  return generated;
+  return { ...generated, tables };
 }

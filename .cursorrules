@@ -1,0 +1,10 @@
+# Project Rules for AI Assistant
+
+## File Placement & Organization
+1. **Temporary Files**: Do NOT place temporary debug scripts, one-off test files, or scratchpads in the `src/` directory.
+   - Use the project root (`./`) or `tmp/` (if it exists) for such files.
+   - Always ask for permission before creating new files in `src/` that are not part of the core feature implementation.
+
+## MCP & Code Generation
+1. **Tool Usage**: When using MCP tools (like `sequelize-gen`), strictly follow the directory instructions defined in the tool's prompt/template.
+2. **Cleanup**: Always clean up temporary files created during debugging sessions once the issue is resolved.

@@ -19,6 +19,8 @@ logs/
 
 # Editor/IDE
 .vscode/
+!.vscode/mcp.json.example
+
 .idea/
 *.swp
 *.swo
@@ -26,6 +28,7 @@ logs/
 # Testing
 coverage/
 output/
+test/
 
 # Runtime data
 pids

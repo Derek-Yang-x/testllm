@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { z } from "zod";
 import { PromptTemplate } from "@langchain/core/prompts";
-import { SqlDatabase } from "@langchain/classic/sql_db";
 import { llm } from "./llm.js";
+import { getRelevantSchema } from "./db.js";
 
 const SQL_PROMPT_TEMPLATE = `You are a SQL expert. Given an input question, create a syntactically correct MySQL query to run.
 
@@ -29,15 +29,15 @@ const SqlQuerySchema = z.object({
 const structuredLlm = llm.withStructuredOutput(SqlQuerySchema);
 const promptTemplate = PromptTemplate.fromTemplate(SQL_PROMPT_TEMPLATE);
 
-export async function generateSqlQuery(question: string, db: SqlDatabase) {
+export async function generateSqlQuery(question: string) {
 
-  const tableInfo = await db.getTableInfo();
+  const { schema, tables } = await getRelevantSchema(question);
 
   const prompt = await promptTemplate.format({
-    table_info: tableInfo,
+    table_info: schema,
     input: question,
   });
 
   const generated = await structuredLlm.invoke(prompt);
-  return generated;
+  return { ...generated, tables };
 }
