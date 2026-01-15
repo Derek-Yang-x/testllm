@@ -6,7 +6,7 @@ import { StateGraph, MessagesAnnotation, MemorySaver } from "@langchain/langgrap
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import * as readline from "readline";
 
-import { llm } from "./llm.js";
+import { getLlm } from "./llm.js";
 import { getSchema } from "./db.js";
 import { AppDataSource } from "./db.js";
 import { generateSqlQuery } from "./sql.js";
@@ -112,7 +112,7 @@ const antdTool = tool(
 const tools = [sqlTool, sequelizeTool, antdTool];
 const toolNode = new ToolNode(tools);
 
-const modelWithTools = llm.bindTools(tools);
+const modelWithTools = getLlm().bindTools(tools);
 
 async function callModel(state: typeof MessagesAnnotation.State) {
   const messages = state.messages;

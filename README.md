@@ -1,128 +1,113 @@
-# Text-to-SQL API Service
+# Text-to-SQL & Code Generation API Service
 
-這是一個使用 TypeScript、Express、LangChain 和 Google Gemini 2.5 Flash 模型構建的 Text-to-SQL API 服務。它可以理解您的自然語言問題，自動生成對應的 SQL 查詢語法，並從資料庫中檢索資料。
+這是一個使用 TypeScript、Express、LangChain 和 Google Gemini 2.5 Flash 模型構建的綜合後端服務。它不僅支援 Text-to-SQL，還整合了 Model Context Protocol (MCP) 來輔助 AI Agent 進行高效的程式碼生成與資料庫管理。
 
-## 功能特色
+## 🌟 功能特色
 
-- **自然語言轉 SQL**: 使用 Google Gemini 先進的 AI 模型將問題轉換為精確的 SQL。
-- **Ant Design 代碼生成**: 自動生成高品質的 Ant Design 5.0 React 組件代碼，並自動保存到 outputs 資料夾。
-- **安全性**: 使用參數化查詢 (Parameterized Queries) 來防止 SQL Injection 攻擊。
-- **結構化輸出**: 利用 Zod 定義輸出格式，確保 AI 生成的回應符合預期。
-- **TypeScript**: 完整的型別定義，開發維護更安全。
-- **MCP 支援**: 提供 MCP Server 讓 AI Agent 直接理解資料庫結構與生成程式碼。
+- **雙資料庫支援**: 同時支援 **MySQL** (TypeORM/Sequelize) 與 **MongoDB** (Mongoose)。
+- **MCP Server 整合**: 提供一系列工具給 Cursor 或 Antigravity Agent 使用：
+  - `list-collections`: 查詢資料庫表單/Collections。
+  - `get-sequelize-prompt`: 生成 MySQL Sequelize Model 與 Controller 的指令。
+  - `get-mongoose-prompt`: 生成 MongoDB Mongoose Model 與 Controller 的指令。
+  - `get-antd-prompt`: 生成 React/Ant Design 5.0 前端頁面的指令 (含知識庫)。
+- **智能 CLI Agent**: 內建互動式 CLI Agent (`npm run chat`)，可直接在終端機中與 AI 對話並執行資料庫操作。
+- **安全性設計**:
+  - 資料庫查詢使用參數化查詢防止 SQL Injection。
+  - LLM 初始化採用 Lazy Loading，無 Key 也能啟動 Server (僅生成功能受限)。
 
-## 安裝說明
+---
 
-1. **複製專案** (如果你還沒有的話)
+## 🚀 快速開始
 
-2. **安裝 Node.js 套件**
-   ```bash
-   npm install
-   ```
-
-3. **設定環境變數**
-   專案根目錄下有一個 `.env.example` 檔案，請將其複製為 `.env` 並填入您的設定：
-   ```bash
-   cp .env.example .env
-   ```
-   
-   請編輯 `.env` 檔案填入以下資訊：
-   - `PORT`: 伺服器運作 port (預設 3000)
-   - `GOOGLE_API_KEY`: 您的 Google AI Studio API Key
-   - `DB_HOST`: 資料庫位址
-   - `DB_PORT`: 資料庫 Port (預設 3306)
-   - `DB_USER`: 資料庫使用者名稱
-   - `DB_PASS`: 資料庫密碼
-   - `DB_NAME`: 資料庫名稱
-
-## MCP Server 設定 (Antigravity / Cursor)
-
-本專案支援 Model Context Protocol (MCP)，可以讓您的 AI 編輯器 (如 Cursor 或 Antigravity Agent) 直接與專案的資料庫和工具進行互動。
-
-### 1. 前置準備 (Prerequisite)
-
-確保您已經安裝了專案依賴 (包含必要的 MCP SDK)：
+### 1. 安裝與設定
 
 ```bash
+# 安裝依賴
 npm install
+
+# 設定環境變數
+cp .env.example .env
 ```
 
-### 2. 設定檔建立與編輯
+編輯 `.env` 檔案：
+```env
+PORT=3000
+GOOGLE_API_KEY=你的_GEMINI_API_KEY
+DB_TYPE=mongo  # 'mysql' 或 'mongo'
+DB_HOST=localhost
+...
+```
 
-MCP 需要一份 `.vscode/mcp.json` 設定檔來告訴編輯器如何啟動 Server。我們已經準備好了一份範本：
+### 2. 資料庫設定
+本專案支援自動切換資料庫模式。請在 `.env` 中設定 `DB_TYPE`：
+- `DB_TYPE=mysql`: 使用 TypeORM 連接 MySQL。
+- `DB_TYPE=mongo`: 使用 Mongoose 連接 MongoDB。
 
-1.  **建立設定檔**：
-    本專案根目錄下已提供 `mcp_config.json.example` 範本。請將其複製並設定為您的 MCP 設定檔。
-    
-    *   **VS Code / Cursor**: 建議將其複製到 `.vscode/mcp.json`：
-        ```bash
-        mkdir -p .vscode
-        cp mcp_config.json.example .vscode/mcp.json
-        ```
-    *   **Antigravity Agent**: 設定檔通常位於 `~/.gemini/antigravity/mcp_config.json`。您可以將內容合併進去，或是在啟動 Agent 時指定。
+### 3. 使用 MCP Server (AI 輔助開發)
 
-2.  **填寫資料庫資訊**：
-    打開 `.vscode/mcp.json`，您會看到兩個 Server 的設定 (`mysql` 和 `sequelize-gen`)。
-    **請務必修改 `env` 區塊中的資料庫連線資訊**，使其符合您的本地 MySQL 設定：
+此專案本身即是一個 MCP Server。請在您的 AI 編輯器 (如 Cursor) 的 MCP 設定檔中加入：
 
-    ```json
-    "env": {
-      "MYSQL_HOST": "127.0.0.1",
-      "MYSQL_PORT": "3306",
-      "MYSQL_USER": "您的帳號 (例如 root)",
-      "MYSQL_PASS": "您的密碼",
-      "MYSQL_DB": "您的資料庫名稱 (例如 cbs)"
+```json
+{
+  "mcpServers": {
+    "testllm-server": {
+      "command": "node",
+      "args": ["/path/to/testllm/src/mcp-server.ts"] 
+      // 或使用 npx tsx /path/to/testllm/src/mcp-server.ts
     }
-    ```
-    *(注意：兩個 Server 都需要設定這些變數)*
+  }
+}
+```
 
-3.  **重新載入視窗**：
-    設定完成後，請務必 **Reload Window (重載視窗)** 或重啟您的 IDE，新的 MCP Server 才會生效。
+**可用 MCP 工具**:
+| 工具名稱 | 用途 |
+| :--- | :--- |
+| `list-collections` | 列出目前資料庫中的所有表格或 Collections。 |
+| `get-sequelize-prompt` | 獲取生成 Sequelize 程式碼的完整 Prompt (含 Schema)。 |
+| `get-mongoose-prompt` | 獲取生成 Mongoose 程式碼的完整 Prompt。 |
+| `get-antd-prompt` | 獲取生成 Ant Design 前端程式碼的 Prompt (含 AntD 知識庫)。 |
 
-### 3. 如何使用
+> **提示**: 在 `.cursorrules` 中已設定 AI 應優先使用這些 MCP 工具。
 
-設定成功後，您可以直接在 Chat 視窗中對 AI 下達自然語言指令：
+---
 
-#### A. 查詢資料庫結構與內容 (由 `mysql` Server 提供)
-您不再需要手動查表，直接問 AI：
-> - 「列出 `user` 表的所有欄位」
-> - 「`chat_messages` 表裡面前 5 筆資料是什麼？」
-> - 「幫我檢查資料庫裡有沒有 `vip_users` 這張表？」
+## 🛠️ 開發與執行
 
-#### B. 生成程式碼 (由 `sequelize-gen` Server 提供)
-我們客製化了一個 Prompt 工具，可以讓 AI 直接讀取資料庫 Schema 並生成符合專案規範的 TypeScript 程式碼：
-
-> **指令範例：**
-> 「使用 `generate-sequelize` Prompt 幫我產生 `user_betting` 表的 Model 和 Controller」
-
-AI 會自動：
-1. 讀取 `user_betting` 的 Table Schema。
-2. 根據專案的 TypeScript/Sequelize 規範 (Decorator, TypeORM Style) 生成 Model。
-3. 生成對應的 Express Controller (包含 CRUD)。
-
-## 執行專案
-
-啟動開發模式 (支援熱重載)：
+### 啟動 HTTP Server (開發模式)
 ```bash
 npm run dev
+# Server 運行於 http://localhost:3000
 ```
 
-伺服器預設會運行在 `http://localhost:3000`。
+### 啟動 CLI Agent (互動對話)
+```bash
+npm run chat
+# 進入互動模式，可直接下指令查詢資料庫或生成程式碼
+```
 
-## API 使用文件 (HTTP 模式)
+### 測試 MCP Server
+```bash
+npm run mcp:test
+# 檢查 MCP Server 是否能正常啟動及連線資料庫
+```
 
-如果您不使用 Agent，也可以透過 HTTP API 來操作：
+---
 
-### 詢問資料庫
-**Endpoint**: `POST /ask-db`
-... (略，維持原樣)
+## 📂 專案結構
+
+- `src/mcp-server.ts`: MCP Server 入口與工具註冊。
+- `src/llm.ts`: Google Gemini LLM 實例 (Lazy Init)。
+- `src/db.ts`: 資料庫連線管理 (支援 MySQL/Mongo 切換)。
+- `src/sequelize.ts`: MySQL 相關生成邏輯。
+- `src/mongoose.ts`: MongoDB 相關生成邏輯。
+- `src/antd.ts`: Ant Design 前端生成邏輯。
+- `output/`: 生成的程式碼預設存放位置。
+- `tmp/`: 暫存檔存放位置。
 
 ## 技術棧
 
-- Node.js & TypeScript
-- Express
-- LangChain
-- Google Gemini (gemini-2.5-flash)
-- TypeORM (MySQL)
-- Zod
-- **Model Context Protocol (MCP)**
+- **Runtime**: Node.js, TypeScript
+- **Web Framework**: Express
+- **AI/LLM**: LangChain, Google Gemini
+- **Database**: TypeORM (MySQL), Mongoose (MongoDB)
+- **Protocol**: Model Context Protocol (MCP)

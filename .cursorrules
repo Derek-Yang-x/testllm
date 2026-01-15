@@ -7,4 +7,5 @@
 
 ## MCP & Code Generation
 1. **Tool Usage**: When using MCP tools, strictly follow the directory instructions defined in the tool's prompt/template.
-2. **Cleanup**: Always clean up temporary files created during debugging sessions once the issue is resolved.
+2. **Prioritize MCP**: Always check available MCP tools (e.g., `get-sequelize-prompt`, `get-mongoose-prompt`, `get-antd-prompt`, `list-collections`) FIRST before writing code manually or using other methods. If a relevant MCP tool exists, use it.
+3. **Cleanup**: Always clean up temporary files created during debugging sessions once the issue is resolved.

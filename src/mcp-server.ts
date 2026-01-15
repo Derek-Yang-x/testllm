@@ -3,7 +3,9 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mc
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { generateAntDPrompt } from "./antd.js";
-import { getRelevantSchema, initializeDb } from "./db.js";
+import { getRelevantSchema, initializeDb, getSchema } from "./db.js";
+import { getMongoosePrompt } from "./mongoose.js";
+import { getSequelizePrompt } from "./sequelize.js";
 
 // Initialize MCP Server
 const server = new McpServer({
@@ -12,50 +14,6 @@ const server = new McpServer({
 });
 
 // Define Prompt Template (Reused from sequelize.ts but adapted for MCP Prompt)
-const SEQUELIZE_PROMPT_TEMPLATE = `You are an expert TypeScript developer specializing in Node.js, Express, and Sequelize (using sequelize-typescript).
-
-Your task is to generate three files based on the user's request:
-1. A **Sequelize Model** using \`sequelize-typescript\` decorators (@Table, @Column, @Model, etc.).
-2. An **Express Controller** that performs CRUD operations for that model.
-3. A **Unit Test** file for the controller using \`jest\` and \`supertest\`.
-
-Current Context:
-- Database: MySQL
-- ORM: sequelize-typescript
-- Framework: Express.js
-- Existing Database Schema:
-{table_info}
-
-Requirements:
-- **Model**:
-  - Class name should be PascalCase (e.g., User).
-  - Extend \`Model\`.
-  - Use decorators correctly.
-  - Map properties to existing columns in the table definition provided in {table_info}.
-- **Controller**:
-  - Export a class (e.g., UserController) or a set of functions.
-  - Include methods/handlers for: create, findAll, findOne, update, delete.
-  - **IMPORTANT**: When importing types (like Request, Response, NextFunction), use \`import type {{ ... }}\` syntax to satisfy 'verbatimModuleSyntax'.
-  - Use \`req\`, \`res\`, \`next\` typed as \`Request\`, \`Response\`, \`NextFunction\` from 'express'.
-  - Handle errors appropriately (try-catch).
-  - **Do NOT include any comments in the code.**
-- **Unit Test**:
-  - Use \`jest\` and \`supertest\`.
-  - Mock the Sequelize model methods.
-  - Test at least one success case for each controller method.
-
-User Request: {input}
-
-Output JSON with matches for:
-- "modelCode": The complete source code for the model file.
-- "controllerCode": The complete source code for the controller file.
-- "testCode": The complete source code for the unit test file.
-- "filename": A suitable filename definition for the model.
-
-**Directory Instructions**:
-- **Model** and **Controller** files should be placed in the **\`output/\`** directory.
-- **Test** files should be placed in the **\`test/\`** directory.
-`;
 
 // Register Prompt
 server.registerPrompt(
@@ -67,14 +25,7 @@ server.registerPrompt(
   },
   async ({ request }) => {
     const question = request || "";
-    
-    // Fetch schema using existing logic
-    console.error(`Fetching schema for request: ${question}`);
-    const { schema } = await getRelevantSchema(question);
-
-    const promptText = SEQUELIZE_PROMPT_TEMPLATE
-        .replace("{input}", question)
-        .replace("{table_info}", schema);
+    const promptText = await getSequelizePrompt(question);
 
     return {
       messages: [
@@ -105,8 +56,9 @@ server.registerTool(
   }
 );
 
+
 server.registerTool(
-  "generate-sequelize-tool",
+  "get-sequelize-prompt",
   {
       inputSchema: {
           request: z.string(),
@@ -114,12 +66,7 @@ server.registerTool(
   },
   async ({ request }) => {
     const question = request || "";
-    console.error(`[Tool] Fetching schema for request: ${question}`);
-    const { schema } = await getRelevantSchema(question);
-
-    const promptText = SEQUELIZE_PROMPT_TEMPLATE
-        .replace("{input}", question)
-        .replace("{table_info}", schema);
+    const promptText = await getSequelizePrompt(question);
 
     return {
       content: [
@@ -133,7 +80,7 @@ server.registerTool(
 );
 
 server.registerTool(
-  "generate-antd",
+  "get-antd-prompt",
   {
     inputSchema: {
       request: z.string().describe("Description of the UI component to generate"),
@@ -162,6 +109,71 @@ server.registerTool(
           {
             type: "text",
             text: `Error generating prompt: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.registerTool(
+  "get-mongoose-prompt",
+  {
+    inputSchema: {
+      request: z.string().describe("Description of what data model/feature to generate for MongoDB"),
+    },
+  },
+  async ({ request }) => {
+    console.error(`[Tool: generate-mongoose] Processing request: ${request}`);
+    try {
+      // Just get the prompt, do NOT call LLM
+      const prompt = await getMongoosePrompt(request);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: prompt,
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error generating Mongoose code:", error);
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.registerTool(
+  "list-collections",
+  {},
+  async () => {
+    try {
+      await initializeDb();
+      const schema = await getSchema();
+      return {
+        content: [
+          {
+            type: "text",
+            text: schema,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Error listing collections: ${error}`,
           },
         ],
       };
