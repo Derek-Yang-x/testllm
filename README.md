@@ -101,7 +101,10 @@ npm run mcp:test
 - `src/sequelize.ts`: MySQL 相關生成邏輯。
 - `src/mongoose.ts`: MongoDB 相關生成邏輯。
 - `src/antd.ts`: Ant Design 前端生成邏輯。
-- `output/`: 生成的程式碼預設存放位置。
+- `src/antd.ts`: Ant Design 前端生成邏輯。
+- `src/generated/`: 生成的程式碼存放位置 (含 Models, Controllers, Routes)。
+- `src/controllers/`: 手寫 Controller 存放位置。
+- `src/models/`: 手寫 Model 存放位置。
 - `tmp/`: 暫存檔存放位置。
 
 ## 技術棧

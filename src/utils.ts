@@ -36,3 +36,14 @@ export async function saveCodeToFile(code: string, filename: string) {
   console.log(`Code saved to ${filename}`);
   return filename;
 }
+
+export async function loadSkillPrompt(skillName: string, promptName: string): Promise<string> {
+  const promptPath = path.join(process.cwd(), `.agent/skills/${skillName}/prompts/${promptName}.md`);
+  try {
+    const content = await fs.readFile(promptPath, "utf-8");
+    return content;
+  } catch (error) {
+    console.error(`Error loading prompt from ${promptPath}:`, error);
+    return "";
+  }
+}

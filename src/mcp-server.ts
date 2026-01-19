@@ -3,9 +3,10 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mc
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { generateAntDPrompt } from "./antd.js";
-import { getRelevantSchema, initializeDb, getSchema } from "./db.js";
+import { initializeDb, getSchema } from "./db.js";
 import { getMongoosePrompt } from "./mongoose.js";
 import { getSequelizePrompt } from "./sequelize.js";
+import mongoose from "mongoose";
 
 // Initialize MCP Server
 const server = new McpServer({
@@ -174,6 +175,46 @@ server.registerTool(
           {
             type: "text",
             text: `Error listing collections: ${error}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.registerTool(
+  "get-collection-schema",
+  {
+    inputSchema: {
+      collectionName: z.string(),
+      limit: z.number().optional().default(1),
+    },
+  },
+  async ({ collectionName, limit }) => {
+    try {
+      await initializeDb();
+      // @ts-ignore
+      const db = mongoose.connection.db;
+      if (!db) {
+        throw new Error("MongoDB not connected");
+      }
+      const docs = await db.collection(collectionName).find({}).limit(limit || 1).toArray();
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(docs, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Error fetching documents: ${error}`,
           },
         ],
       };

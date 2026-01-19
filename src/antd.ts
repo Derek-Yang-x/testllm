@@ -1,5 +1,7 @@
 import "dotenv/config";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { loadSkillPrompt } from "./utils.js";
+import { getLlm } from "./llm.js";
 
 // Reused helper for loading knowledge base
 async function loadPlainTextUrl(url: string) {
@@ -34,51 +36,69 @@ const antdContextPromise = (async () => {
 
 export async function generateAntDPrompt(userInput: string, modelContext?: string): Promise<string> {
   const context = await antdContextPromise;
+  const template = await loadSkillPrompt("antd-generator", "antd");
 
-  const defaultSystemPrompt = `你是一位資深的 Ant Design 5.0 專家。
-    請參考以下技術文檔片段來生成代碼：
-    ----------------
-    ${context.replace(/{/g, "{{").replace(/}/g, "}}")}
-    ----------------
-    
-    ${modelContext ? `
+  if (!template) {
+    throw new Error("Failed to load AntD prompt from skills");
+  }
+
+  // Pre-process template to inject context manually if needed, or rely on LangChain's partials if variable names match.
+  // The original code was:
+  // ${context.replace(/{/g, "{{").replace(/}/g, "}}")}
+  // The skill prompt uses {{context}} and {{modelContext}}.
+  
+  // Since we are loading a markdown file that likely contains {{context}} placeholders,
+  // we need to be careful. LangChain's PromptTemplate expects single braces {variable}.
+  // If the markdown file uses {{variable}} (double braces) for Handlebars-style or just visual, 
+  // LangChain deals with single braces.
+
+  // Let's assume the skill prompt (antd.md) uses {{context}} as a placeholder.
+  
+  // Optimization: Construct the system prompt by replacing placeholders directly in the string
+  // to avoid brace-escaping hell with LangChain if the context itself contains code.
+  
+  let systemPrompt = template
+      .replace("{{context}}", context)
+      .replace("{{modelContext}}", modelContext ? `
     相關的資料庫 Model 結構如下 (請從中選擇與需求相關的表格及欄位)：
     ----------------
-    ${modelContext.replace(/{/g, "{{").replace(/}/g, "}}")}
+    ${modelContext}
     ----------------
-    ` : ""}
+    ` : "");
 
-    要求：
-    - 使用 React Functional Components 和 TypeScript。
-    - 優先使用 ProComponents。
-    - 只輸出代碼塊，不要解釋。`;
-
-  const prompt = await ChatPromptTemplate.fromMessages([
-    ["system", defaultSystemPrompt],
-    ["human", "{input}"],
-  ]).format({ input: userInput });
+  // Now systemPrompt contains the full prompt with context. 
+  // It effectively becomes the system message or the input for the chain.
   
-  return prompt;
+  // The original code used ChatPromptTemplate.
+  // Let's use it to format the final user input part if the template still has {input}
+  
+  // If the skill prompt has "{input}" (single brace) or "User Request: {input}"
+  // we can use PromptTemplate.
+
+  // Check if {input} exists in the loaded template
+  if (systemPrompt.includes("{input}")) {
+      const prompt = await ChatPromptTemplate.fromMessages([
+          ["system", systemPrompt.replace("{input}", "").trim()], // Remove {input} from system if it was there, assuming it's in user message? 
+          // Actually, looking at antd.md: "User Request: {input}" is at the bottom.
+          // It's better to treat the whole thing as a template.
+      ]).format({ input: userInput }); // This ignores the system/user split if we just passing string?
+      
+      // Let's stick to the original logic: split system and user?
+      // Or just format the whole string.
+      
+      const pt = ChatPromptTemplate.fromTemplate(systemPrompt);
+      return await pt.format({ input: userInput });
+  }
+
+  // Fallback
+  return systemPrompt;
 }
 
 export async function generateAntDCode(userInput: string, modelContext?: string) {
-  // Use the new prompt generator logic
   const promptStr = await generateAntDPrompt(userInput, modelContext);
   
-  // Directly invoke LLM with the formatted prompt
-  // Since 'model' is likely a ChatOpenAI or similar LangChain object, we can invoke it with a string or messages.
-  // Although generateAntDPrompt returns a string (the formatted prompt), passing it as a single human message string is usually fine for chat models,
-  // OR we can reconstruct a simple message array if needed.
-  // However, 'model.invoke' typically accepts a string or BaseMessage[].
+  const result = await getLlm().invoke(promptStr);
   
-  // Let's create a simple chain: Prompt (String) -> LLM -> StringOutputParser
-  // But since promptStr is already the FINAL formatted string, we might just pass it.
-  
-  // Dynamically import llm to avoid initialization errors if API key is missing when only generating prompts
-  const { llm } = await import("./llm.js");
-  const result = await llm.invoke(promptStr);
-  
-  // Result is likely an AIMessage.
   if (typeof result === 'string') return result;
   if (Array.isArray(result.content)) {
     return result.content.map((c: any) => c.text || '').join('');

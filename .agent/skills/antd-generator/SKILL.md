@@ -22,4 +22,4 @@ This skill allows you to generate Ant Design UI components (specifically ProComp
     - Replace `{{context}}` with the content of `resources/antd-docs.txt`.
     - Replace `{{modelContext}}` with relevant database schema or leave empty.
 4.  **Save Files**:
-    - Save the generated component files to the appropriate directory (e.g., `src/pages/` or `output/`).
+    - Save the generated component files to the `src/generated/pages/` directory.
