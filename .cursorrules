@@ -6,6 +6,9 @@
 3. **Source Code**: Only move files to `src/` after they have been verified.
 
 ## MCP & Code Generation
-1. **Tool Usage**: When using MCP tools, strictly follow the directory instructions defined in the tool's prompt/template.
-2. **Prioritize MCP**: Always check available MCP tools (e.g., `get-sequelize-prompt`, `get-mongoose-prompt`, `get-antd-prompt`, `list-collections`) FIRST before writing code manually or using other methods. If a relevant MCP tool exists, use it.
-3. **Cleanup**: Always clean up temporary files created during debugging sessions once the issue is resolved.
+1. **Check Environment First**: Before generating any database-related code, **ALWAYS** check the `.env` file for `DB_TYPE`.
+   - If `DB_TYPE=mongo`, use `get-mongoose-prompt`.
+   - If `DB_TYPE=mysql` (or missing), use `get-sequelize-prompt`.
+2. **Tool Usage**: When using MCP tools, strictly follow the directory instructions defined in the tool's prompt/template.
+3. **Prioritize MCP**: Always check available MCP tools (e.g., `get-sequelize-prompt`, `get-mongoose-prompt`, `get-antd-prompt`, `list-collections`) FIRST before writing code manually or using other methods. If a relevant MCP tool exists, use it.
+4. **Cleanup**: Always clean up temporary files created during debugging sessions once the issue is resolved.
