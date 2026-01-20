@@ -1,5 +1,5 @@
 ---
-description: Generate comprehensive database feature (Model, API, UI) with strict DB check using PURE MCP TOOLS (No temp files)
+description: "Generate Code (Model/API/UI)"
 ---
 1. **Check Environment**: Read `.env` to determine `DB_TYPE` (mongo vs mysql).
 2. **Verify & Inspect (MCP ONLY)**: 

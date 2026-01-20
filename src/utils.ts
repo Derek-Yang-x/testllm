@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import prettier from 'prettier';
 
@@ -11,7 +12,7 @@ export async function saveCodeToFile(code: string, filename: string) {
   if (match) {
     content = match[1] || "";
   }
-  
+
   // Ensure escaped newlines are properly formatted
   content = content.replace(/\\n/g, '\n');
 
@@ -23,7 +24,7 @@ export async function saveCodeToFile(code: string, filename: string) {
     if (ext === '.js' || ext === '.jsx') parser = 'babel';
     if (ext === '.html') parser = 'html';
     if (ext === '.css') parser = 'css';
-    
+
     content = await prettier.format(content, { parser });
   } catch (err) {
     console.warn(`Prettier formatting failed for ${filename}:`, err);
@@ -38,7 +39,9 @@ export async function saveCodeToFile(code: string, filename: string) {
 }
 
 export async function loadSkillPrompt(skillName: string, promptName: string): Promise<string> {
-  const promptPath = path.join(process.cwd(), `.agent/skills/${skillName}/prompts/${promptName}.md`);
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const projectRoot = path.resolve(__dirname, '..');
+  const promptPath = path.join(projectRoot, `.agent/skills/${skillName}/prompts/${promptName}.md`);
   try {
     const content = await fs.readFile(promptPath, "utf-8");
     return content;

@@ -13,43 +13,43 @@ const DB_TYPE = process.env.DB_TYPE || "mysql"; // 'mysql' | 'mongo'
 // Database Configuration
 // MongoDB Configuration
 const getMongoUri = () => {
-    if (process.env.MONGODB_URI) return process.env.MONGODB_URI;
-    
-    // Prioritize MONGO_ prefixed variables, fall back to shared HOST/NAME, 
-    // but avoid DB_PORT/USER/PASS defaults which are likely MySQL-specific.
-    const host = process.env.DB_HOST || "localhost";
-    const port = process.env.DB_PORT || "27017"; // Default to 27017, ignore DB_PORT (3306)
-    const dbName = process.env.DB_NAME || "cbs";
-    const user = process.env.DB_USER || "root";
-    const pass = process.env.DB_PASS || "passwd";
+  if (process.env.MONGODB_URI) return process.env.MONGODB_URI;
 
-    if (user && pass) {
-      return `mongodb://${user}:${pass}@${host}:${port}/${dbName}?authSource=admin`;
-    }
-    return `mongodb://${host}:${port}/${dbName}`;
+  // Prioritize MONGO_ prefixed variables, fall back to shared HOST/NAME, 
+  // but avoid DB_PORT/USER/PASS defaults which are likely MySQL-specific.
+  const host = process.env.DB_HOST || "localhost";
+  const port = process.env.DB_PORT || "27017"; // Default to 27017, ignore DB_PORT (3306)
+  const dbName = process.env.DB_NAME || "cbs";
+  const user = process.env.DB_USER || "root";
+  const pass = process.env.DB_PASS || "passwd";
+
+  if (user && pass) {
+    return `mongodb://${user}:${pass}@${host}:${port}/${dbName}?authSource=admin`;
+  }
+  return `mongodb://${host}:${port}/${dbName}`;
 };
 
 
 const options: DataSourceOptions =
   DB_TYPE === "mongo"
     ? {
-        type: "mongodb",
-        url: getMongoUri(),
-        authSource: "admin",
-        synchronize: false,
-        logging: false,
-        entities: [],
-      }
+      type: "mongodb",
+      url: getMongoUri(),
+      authSource: "admin",
+      synchronize: false,
+      logging: false,
+      entities: [],
+    }
     : {
-        type: "mysql",
-        host: process.env.DB_HOST || "localhost",
-        port: Number(process.env.DB_PORT || 3306),
-        username: process.env.DB_USER || "root",
-        password: process.env.DB_PASS || "passwd",
-        database: process.env.DB_NAME || "cbs",
-        synchronize: false, // AI 專案建議設為 false，避免自動改表
-        logging: false,
-      };
+      type: "mysql",
+      host: process.env.DB_HOST || "localhost",
+      port: Number(process.env.DB_PORT || 3306),
+      username: process.env.DB_USER || "root",
+      password: process.env.DB_PASS || "passwd",
+      database: process.env.DB_NAME || "cbs",
+      synchronize: false, // AI 專案建議設為 false，避免自動改表
+      logging: false,
+    };
 
 export const AppDataSource = new DataSource(options);
 
@@ -64,13 +64,13 @@ export let db: SqlDatabase;
 
 // Initialization
 export async function initializeDb() {
-  console.log(`[DB] Initializing database connection for type: ${DB_TYPE}`);
-  
+
+
   if (DB_TYPE === "mysql") {
     if (!AppDataSource.isInitialized) {
       try {
         await AppDataSource.initialize();
-        console.log("✅ MySQL (TypeORM) connected successfully");
+
       } catch (err) {
         console.error("❌ MySQL connection error:", err);
       }
@@ -81,10 +81,21 @@ export async function initializeDb() {
   } else if (DB_TYPE === "mongo") {
     if (mongoose.connection.readyState === 0) {
       try {
-        await mongoose.connect(MONGODB_URI);
-        console.log("✅ MongoDB (Mongoose) connected successfully");
+        await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
+
+        // Verify connection explicitly
+        if ((mongoose.connection.readyState as number) === 1) {
+          // @ts-ignore
+          const adminDb = mongoose.connection.db;
+          if (adminDb) {
+            // Test permissions (and auth) by listing collections
+            await adminDb.listCollections().toArray();
+          }
+        }
       } catch (err) {
         console.error("❌ MongoDB connection error:", err);
+        // Throw error to ensure startup fails fast if DB is unreachable
+        throw err;
       }
     }
   } else {
@@ -100,13 +111,13 @@ async function getAllTableNames(): Promise<string[]> {
   if (cachedTableNames) return cachedTableNames;
 
   try {
-      const tables = await AppDataSource.query("SHOW TABLES");
-      // Result is like [ { Tables_in_cbs: 'action_log' }, ... ]
-      cachedTableNames = tables.map((row: any) => Object.values(row)[0] as string);
-      return cachedTableNames!;
+    const tables = await AppDataSource.query("SHOW TABLES");
+    // Result is like [ { Tables_in_cbs: 'action_log' }, ... ]
+    cachedTableNames = tables.map((row: any) => Object.values(row)[0] as string);
+    return cachedTableNames!;
   } catch (err) {
-      console.error("Error fetching table names:", err);
-      return [];
+    console.error("Error fetching table names:", err);
+    return [];
   }
 }
 
@@ -119,57 +130,57 @@ export async function getSchema() {
     }
     return cachedSchema || "";
   } else if (DB_TYPE === "mongo") {
-     if (mongoose.connection.readyState === 0) await initializeDb();
-     try {
-       // @ts-ignore - native db access
-       const collections = await mongoose.connection.db.listCollections().toArray();
-       const names = collections.map(c => c.name);
-       return `MongoDB Collections: ${names.join(", ")}`;
-     } catch (error) {
-       return `Error fetching MongoDB collections: ${error}`;
-     }
+    if (mongoose.connection.readyState === 0) await initializeDb();
+    try {
+      // @ts-ignore - native db access
+      const collections = await mongoose.connection.db.listCollections().toArray();
+      const names = collections.map(c => c.name);
+      return `MongoDB Collections: ${names.join(", ")}`;
+    } catch (error) {
+      return `Error fetching MongoDB collections: ${error}`;
+    }
   }
   return "";
 }
 
 export async function getRelevantSchema(question: string): Promise<{ schema: string, tables: string[] }> {
   if (DB_TYPE === "mysql") {
-      // Original MySQL Logic
-      try {
-        const allTables = await getAllTableNames();
-        const lowerQuestion = question.toLowerCase();
-        
-        const selectedTables = allTables.filter(table => {
-          const lowerTable = table.toLowerCase();
-          if (lowerQuestion.includes(lowerTable)) return true;
-          const parts = lowerTable.split('_');
-          return parts.some(part => part.length > 3 && lowerQuestion.includes(part));
-        });
+    // Original MySQL Logic
+    try {
+      const allTables = await getAllTableNames();
+      const lowerQuestion = question.toLowerCase();
 
-        let finalTables = selectedTables;
-        if (selectedTables.length === 0) {
-          console.error("No specific tables matched via keywords. Using all tables as context.");
-          finalTables = allTables;
-        } else {
-          console.error("Selected tables (keyword match):", finalTables);
-        }
-      
-        if (!db) await initializeDb();
-        if (db) {
-            const schema = await db.getTableInfo(finalTables);
-            return { schema, tables: finalTables };
-        }
-        return { schema: "Database not connected", tables: [] };
-      } catch (error) {
-        console.error("Error in getRelevantSchema:", error);
-         if (db) {
-            return { schema: await db.getTableInfo(), tables: [] };
-         }
-         return { schema: `Error: ${error}`, tables: [] };
+      const selectedTables = allTables.filter(table => {
+        const lowerTable = table.toLowerCase();
+        if (lowerQuestion.includes(lowerTable)) return true;
+        const parts = lowerTable.split('_');
+        return parts.some(part => part.length > 3 && lowerQuestion.includes(part));
+      });
+
+      let finalTables = selectedTables;
+      if (selectedTables.length === 0) {
+        console.error("No specific tables matched via keywords. Using all tables as context.");
+        finalTables = allTables;
+      } else {
+        console.error("Selected tables (keyword match):", finalTables);
       }
+
+      if (!db) await initializeDb();
+      if (db) {
+        const schema = await db.getTableInfo(finalTables);
+        return { schema, tables: finalTables };
+      }
+      return { schema: "Database not connected", tables: [] };
+    } catch (error) {
+      console.error("Error in getRelevantSchema:", error);
+      if (db) {
+        return { schema: await db.getTableInfo(), tables: [] };
+      }
+      return { schema: `Error: ${error}`, tables: [] };
+    }
   } else {
-      // MongoDB Logic (Simplified)
-      const schema = await getSchema();
-      return { schema: schema as string, tables: [] };
+    // MongoDB Logic (Simplified)
+    const schema = await getSchema();
+    return { schema: schema as string, tables: [] };
   }
 }

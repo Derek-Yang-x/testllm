@@ -4,9 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "nodemon",
     "mcp:test": "tsx src/mcp-server.ts",
-    "chat": "tsx src/agent.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "mcp": "tsx src/mcp-server.ts"
   },
@@ -57,5 +56,16 @@
     "sequelize-typescript": "^2.1.6",
     "typeorm": "^0.3.28",
     "zod": "^4.3.5"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "src"
+    ],
+    "ext": "ts,json",
+    "ignore": [
+      "src/generated/**/*.test.ts"
+    ],
+    "exec": "tsx src/index.ts",
+    "delay": 2500
   }
 }

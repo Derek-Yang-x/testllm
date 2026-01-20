@@ -26,7 +26,7 @@ const SqlQuerySchema = z.object({
   params: z.array(z.any()).optional().describe("The parameters for the SQL query"),
 });
 
-const structuredLlm = getLlm().withStructuredOutput(SqlQuerySchema);
+
 const promptTemplate = PromptTemplate.fromTemplate(SQL_PROMPT_TEMPLATE);
 
 export async function generateSqlQuery(question: string) {
@@ -37,7 +37,7 @@ export async function generateSqlQuery(question: string) {
     table_info: schema,
     input: question,
   });
-
+  const structuredLlm = getLlm().withStructuredOutput(SqlQuerySchema);
   const generated = await structuredLlm.invoke(prompt);
   return { ...generated, tables };
 }

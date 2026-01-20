@@ -36,3 +36,9 @@ pids
 *.pid
 *.seed
 *.pid.lock
+
+# Generated Code
+src/generated/
+
+# Generator Resources
+.agent/skills/antd-generator/resources/

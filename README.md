@@ -10,7 +10,6 @@
   - `get-sequelize-prompt`: 生成 MySQL Sequelize Model 與 Controller 的指令。
   - `get-mongoose-prompt`: 生成 MongoDB Mongoose Model 與 Controller 的指令。
   - `get-antd-prompt`: 生成 React/Ant Design 5.0 前端頁面的指令 (含知識庫)。
-- **智能 CLI Agent**: 內建互動式 CLI Agent (`npm run chat`)，可直接在終端機中與 AI 對話並執行資料庫操作。
 - **安全性設計**:
   - 資料庫查詢使用參數化查詢防止 SQL Injection。
   - LLM 初始化採用 Lazy Loading，無 Key 也能啟動 Server (僅生成功能受限)。
@@ -45,15 +44,25 @@ DB_HOST=localhost
 
 ### 3. 使用 MCP Server (AI 輔助開發)
 
-此專案本身即是一個 MCP Server。請在您的 AI 編輯器 (如 Cursor) 的 MCP 設定檔中加入：
+此專案本身即是一個 MCP Server。
+
+#### 若您使用 Antigravity
+本專案提供了一個範例設定檔 `mcp_config.json.example`，其中包含了必要的設定與 Wrapper Script 路徑。
+
+請將 `mcp_config.json.example` 的內容複製到 Antigravity 的全域設定檔中：
+1.  開啟 `~/.gemini/antigravity/mcp_config.json`。
+2.  將 `mcp_config.json.example` 中的 `mcpServers` 區塊內容，合併到該檔案中。
+3.  **重要**：請確保 `project-server` 中的 `DB_` 環境變數符合您的資料庫設定。
+
+#### 若您使用 Claude Desktop
+請在您的 Claude Desktop 設定檔中加入 (通常位於 `~/Library/Application Support/Claude/claude_desktop_config.json`)：
 
 ```json
 {
   "mcpServers": {
     "testllm-server": {
-      "command": "node",
-      "args": ["/path/to/testllm/src/mcp-server.ts"] 
-      // 或使用 npx tsx /path/to/testllm/src/mcp-server.ts
+      "command": "/Users/derekyang/testllm/start-mcp.sh",
+      "args": []
     }
   }
 }
@@ -77,12 +86,6 @@ DB_HOST=localhost
 ```bash
 npm run dev
 # Server 運行於 http://localhost:3000
-```
-
-### 啟動 CLI Agent (互動對話)
-```bash
-npm run chat
-# 進入互動模式，可直接下指令查詢資料庫或生成程式碼
 ```
 
 ### 測試 MCP Server

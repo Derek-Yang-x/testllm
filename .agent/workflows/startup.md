@@ -1,5 +1,7 @@
 ---
-description: "Project Startup & Context Refresh"
+description: "Project Startup"
+title: "Project Startup"
+name: "startup"
 ---
 
 # Project Startup Convention

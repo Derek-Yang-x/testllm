@@ -10,5 +10,6 @@
 - 使用 React Functional Components 和 TypeScript。
 - 優先使用 ProComponents。
 - 只輸出代碼塊，不要解釋。
+- 生成的文件路徑應為：`src/generated/frontend/Component.tsx`。
 
 User Request: {input}

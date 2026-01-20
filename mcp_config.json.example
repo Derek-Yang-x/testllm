@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "filesystem": {
-      "command": "npx",
+      "command": "/Users/derekyang/.nvm/versions/node/v22.14.0/bin/npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
@@ -13,7 +13,6 @@
       "args": [
         "/Users/derekyang/testllm/node_modules/@benborla29/mcp-server-mysql/dist/index.js"
       ],
-      "cwd": "/Users/derekyang/testllm",
       "env": {
         "MYSQL_HOST": "127.0.0.1",
         "MYSQL_PORT": "3306",
@@ -22,19 +21,16 @@
         "MYSQL_DB": "cbs"
       }
     },
-    "sequelize-gen": {
-      "command": "/Users/derekyang/.nvm/versions/node/v22.14.0/bin/node",
-      "args": [
-        "/Users/derekyang/testllm/node_modules/.bin/tsx",
-        "/Users/derekyang/testllm/src/mcp-server.ts"
-      ],
-      "cwd": "/Users/derekyang/testllm",
+    "project-server": {
+      "command": "/Users/derekyang/testllm/start-mcp.sh",
+      "args": [],
       "env": {
-        "DB_HOST": "127.0.0.1",
-        "DB_PORT": "3306",
+        "DB_TYPE": "mongo",
+        "DB_HOST": "localhost",
+        "DB_PORT": "27017",
+        "DB_NAME": "cbs",
         "DB_USER": "root",
-        "DB_PASS": "passwd",
-        "DB_NAME": "cbs"
+        "DB_PASS": "passwd"
       }
     }
   }

@@ -10,31 +10,43 @@ Current Context:
 - Database: MySQL
 - ORM: sequelize-typescript
 - Framework: Express.js
+- Environment: Node.js (ESM), TypeScript
 - Existing Database Schema:
 {table_info}
 
 Requirements:
+- **General ESM Rules**:
+  - **ALWAYS** incorporate `.js` extension for relative imports (e.g., `import { User } from '../models/User.js';`).
+  - **ALWAYS** use `import type` for type-only imports (e.g., `import type { Request, Response } from 'express';`).
+
 - **Model**:
   - Class name should be PascalCase (e.g., User).
   - Extend `Model`.
   - Use decorators correctly.
   - Map properties to existing columns in the table definition provided in {table_info}.
   - If the user asks for a table that doesn't exist, try to infer the structure or create a new one based on best practices.
+  
 - **Controller**:
   - Export a class (e.g., UserController) or a set of functions.
   - Include methods/handlers for: create, findAll, findOne, update, delete.
-  - **IMPORTANT**: When importing types (like Request, Response, NextFunction), use `import type {{ ... }}` syntax to satisfy 'verbatimModuleSyntax'.
   - Use `req`, `res`, `next` typed as `Request`, `Response`, `NextFunction` from 'express'.
   - Handle errors appropriately (try-catch).
   - **Do NOT include any comments in the code.**
+
 - **Route**:
   - Create an Express Router.
-  - Import the Controller from `../controllers/${filename}` (relative path in generated folder).
+  - Import the Controller from `../controllers/${filename}.js`.
   - Define routes for CRUD: GET /, GET /:id, POST /, PUT /:id, DELETE /:id.
   - Export the router.
+
 - **Unit Test**:
-  - Use `jest` and `supertest`.
-  - Mock the Sequelize model methods.
+  - **Jest ESM Setup**:
+    - Import globals explicitly: `import { jest, describe, it, expect, afterEach, beforeAll } from '@jest/globals';`.
+    - Use `jest.unstable_mockModule` to mock the Sequelize model **BEFORE** importing it.
+    - Use **Dynamic Imports** (`await import(...)`) for the model and routes after mocking.
+  - **Mocking**:
+    - Mock the Sequelize model module to return an object where the model (e.g., `User`) has mock functions (jest.fn()) for: `create`, `findAll`, `findByPk`, `update`, `destroy`, `count`.
+    - Note: sequelize-typescript models often use static methods like `User.findAll()`.
   - Test at least one success case for each controller method.
 
 User Request: {input}

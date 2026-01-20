@@ -53,8 +53,39 @@ https.get(DOCS_URL, (res) => {
   file.on('finish', () => {
     file.close();
     console.log(`Documentation saved to: ${OUTPUT_FILE}`);
+    splitDocs();
   });
 }).on('error', (err) => {
   console.error(`Error fetching docs: ${err.message}`);
   process.exit(1);
 });
+
+function splitDocs() {
+  const content = fs.readFileSync(OUTPUT_FILE, 'utf-8');
+  const sections = content.split(/^### /gm);
+  const docsDir = path.join(OUTPUT_DIR, 'docs');
+
+  if (!fs.existsSync(docsDir)) {
+    fs.mkdirSync(docsDir, { recursive: true });
+  }
+
+  // First section might be preamble, skip if empty or headerless
+  sections.forEach((section) => {
+    if (!section.trim()) return;
+
+    // specific handling for the first line which contains the component name
+    const lines = section.split('\n');
+    // Replace spaces and slashes with hyphens, remove other special chars
+    const componentName = lines[0]?.trim().toLowerCase()
+      .replace(/[\s\/]+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+    if (componentName) {
+      const filePath = path.join(docsDir, `${componentName}.md`);
+      // Add back the header '### ' for context if needed, or just save content
+      fs.writeFileSync(filePath, '### ' + section);
+      // console.log(`Generated doc: ${componentName}.md`);
+    }
+  });
+  console.log(`[Split] Documentation split into individual files in ${docsDir}`);
+}

@@ -10,13 +10,19 @@ Current Context:
 - Database: MongoDB
 - ODM: Mongoose
 - Framework: Express.js
+- Environment: Node.js (ESM), TypeScript
 
 Requirements:
+- **General ESM Rules**:
+  - **ALWAYS** incorporate `.js` extension for relative imports (e.g., `import {{ User }} from '../models/User.js';`).
+  - **ALWAYS** use `import type` for type-only imports (e.g., `import type {{ Request, Response }} from 'express';`).
+
 - **Model**:
   - Define a TypeScript Interface for the document (e.g., IUser).
   - Define the Mongoose Schema with types and validation.
   - Export the Model (e.g., `export const User = mongoose.model<IUser>('User', UserSchema);`).
   - Use PascalCase for the model name.
+
 - **Controller**:
   - Export a class (e.g., UserController).
   - Include methods: create, findAll, findOne, update, delete.
@@ -25,15 +31,22 @@ Requirements:
   - **IMPORTANT**: Handle pagination (skip/limit) in findAll.
   - Handle errors utilizing try-catch blocks.
   - **Do NOT include comments.**
+
 - **Route**:
   - Create an Express Router.
-  - Import the Controller from `../controllers/${filename}`.
+  - Import the Controller from `../controllers/${{filename}}.js`.
   - Define routes for CRUD.
   - Export the router.
+
 - **Unit Test**:
-  - Use `jest` and `supertest`.
-  - Mock Mongoose model methods properly using `jest.spyOn` or similar.
-  - Test happy paths for CRUD.
+  - **Jest ESM Setup**:
+    - Import globals explicitly: `import {{ jest, describe, it, expect, afterEach, beforeAll }} from '@jest/globals';`.
+    - Use `jest.unstable_mockModule` to mock the Mongoose model **BEFORE** importing it.
+    - Use **Dynamic Imports** (`await import(...)`) for the model and routes after mocking.
+  - **Mocking**:
+    - Mock the Mongoose model module to return an object where the model (e.g., `User`) has mock functions (jest.fn()) for: `create`, `find`, `findById`, `findByIdAndUpdate`, `findByIdAndDelete`, `countDocuments`.
+    - In `find` mock, make sure it returns a chainable object (mock `skip`, `limit`, `sort`).
+  - Use `supertest` to test endpoints.
 
 User Request: {input}
 
