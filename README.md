@@ -9,7 +9,10 @@
   - `list-collections`: 查詢資料庫表單/Collections。
   - `get-sequelize-prompt`: 生成 MySQL Sequelize Model 與 Controller 的指令。
   - `get-mongoose-prompt`: 生成 MongoDB Mongoose Model 與 Controller 的指令。
+  - `get-mongoose-prompt`: 生成 MongoDB Mongoose Model 與 Controller 的指令。
   - `get-antd-prompt`: 生成 React/Ant Design 5.0 前端頁面的指令 (含知識庫)。
+  - `custom_jira_search`: 使用 JQL 查詢 Jira 單號。
+  - `custom_jira_get_issue`: 查詢特定 Jira 單號詳情。
 - **安全性設計**:
   - 資料庫查詢使用參數化查詢防止 SQL Injection。
   - LLM 初始化採用 Lazy Loading，無 Key 也能啟動 Server (僅生成功能受限)。
@@ -35,6 +38,8 @@ GOOGLE_API_KEY=你的_GEMINI_API_KEY
 DB_TYPE=mongo  # 'mysql' 或 'mongo'
 DB_HOST=localhost
 ...
+JIRA_URL=https://your-jira-domain.com
+JIRA_API_TOKEN=your_jira_api_token
 ```
 
 ### 2. 資料庫設定
@@ -75,6 +80,8 @@ DB_HOST=localhost
 | `get-sequelize-prompt` | 獲取生成 Sequelize 程式碼的完整 Prompt (含 Schema)。 |
 | `get-mongoose-prompt` | 獲取生成 Mongoose 程式碼的完整 Prompt。 |
 | `get-antd-prompt` | 獲取生成 Ant Design 前端程式碼的 Prompt (含 AntD 知識庫)。 |
+| `custom_jira_search` | 使用 JQL 查詢 Jira 單號 (支援 status 篩選)。 |
+| `custom_jira_get_issue` | 查詢特定 Jira 單號的詳細內容 (描述、留言等)。 |
 
 > **提示**: 在 `.cursorrules` 中已設定 AI 應優先使用這些 MCP 工具。
 

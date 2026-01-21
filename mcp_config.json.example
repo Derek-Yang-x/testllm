@@ -24,14 +24,7 @@
     "project-server": {
       "command": "/Users/derekyang/testllm/start-mcp.sh",
       "args": [],
-      "env": {
-        "DB_TYPE": "mongo",
-        "DB_HOST": "localhost",
-        "DB_PORT": "27017",
-        "DB_NAME": "cbs",
-        "DB_USER": "root",
-        "DB_PASS": "passwd"
-      }
+      "env": {}
     }
   }
 }

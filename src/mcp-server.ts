@@ -1,4 +1,4 @@
-
+import "dotenv/config";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import { initializeDb, getSchema } from "./db.js";
 import { getMongoosePrompt } from "./mongoose.js";
 import { getSequelizePrompt } from "./sequelize.js";
 import mongoose from "mongoose";
+import { searchJiraIssues, getJiraIssue } from "./jira.js";
 
 // Initialize MCP Server
 const server = new McpServer({
@@ -20,9 +21,9 @@ const server = new McpServer({
 server.registerPrompt(
   "generate-sequelize",
   {
-      argsSchema: {
-          request: z.string().describe("Description of what model/table to generate code for"),
-      },
+    argsSchema: {
+      request: z.string().describe("Description of what model/table to generate code for"),
+    },
   },
   async ({ request }) => {
     const question = request || "";
@@ -61,9 +62,9 @@ server.registerTool(
 server.registerTool(
   "get-sequelize-prompt",
   {
-      inputSchema: {
-          request: z.string(),
-      },
+    inputSchema: {
+      request: z.string(),
+    },
   },
   async ({ request }) => {
     const question = request || "";
@@ -92,7 +93,7 @@ server.registerTool(
     console.error(`[Tool: generate-antd] Processing request: ${request}`);
     try {
       const prompt = await generateAntDPrompt(request, modelContext);
-      
+
       // Return the prompt text directly, DO NOT call LLM
       return {
         content: [
@@ -129,7 +130,7 @@ server.registerTool(
     try {
       // Just get the prompt, do NOT call LLM
       const prompt = await getMongoosePrompt(request);
-      
+
       return {
         content: [
           {
@@ -199,7 +200,7 @@ server.registerTool(
         throw new Error("MongoDB not connected");
       }
       const docs = await db.collection(collectionName).find({}).limit(limit || 1).toArray();
-      
+
       return {
         content: [
           {
@@ -222,6 +223,96 @@ server.registerTool(
   }
 );
 
+server.registerTool(
+  "custom_jira_search",
+  {
+    inputSchema: {
+      jql: z.string().describe("JQL query string"),
+      maxResults: z.number().optional().describe("Max results to return (default 20)"),
+    },
+  },
+  async ({ jql, maxResults }) => {
+    try {
+      const data = await searchJiraIssues(jql, maxResults);
+      // Format for display
+      const issues = (data.issues || []).map((i: any) => {
+        return {
+          key: i.key,
+          summary: i.fields?.summary,
+          status: i.fields?.status?.name
+        }
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(issues, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Jira Search Error: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.registerTool(
+  "custom_jira_get_issue",
+  {
+    inputSchema: {
+      issueKey: z.string().describe("Jira Issue Key (e.g. TCG-123)"),
+    },
+  },
+  async ({ issueKey }) => {
+    try {
+      const data = await getJiraIssue(issueKey);
+
+      // Simplify output for LLM/User consumption 
+      const fields = data.fields || {};
+      const simpleIssue = {
+        key: data.key,
+        summary: fields.summary,
+        status: fields.status?.name,
+        assignee: fields.assignee?.displayName,
+        description: fields.description,
+        comments: (fields.comment?.comments || []).slice(-3).map((c: any) => ({
+          author: c.author?.displayName,
+          body: c.body,
+          created: c.created
+        }))
+      };
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(simpleIssue, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Jira Get Issue Error: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
 // Start the server
 async function runServer() {
   const transport = new StdioServerTransport();
@@ -231,7 +322,7 @@ async function runServer() {
   // Attempt to connect to DB in background with retries
   const MAX_RETRIES = 10;
   const RETRY_DELAY = 3000;
-  
+
   (async () => {
     for (let i = 0; i < MAX_RETRIES; i++) {
       try {
