@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "{{NPX_PATH}}",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "{{PROJECT_ROOT}}"
+      ]
+    },
+    "mysql": {
+      "command": "{{NODE_PATH}}",
+      "args": [
+        "{{PROJECT_ROOT}}/node_modules/@benborla29/mcp-server-mysql/dist/index.js"
+      ],
+      "env": {
+        "MYSQL_HOST": "{{MYSQL_HOST}}",
+        "MYSQL_PORT": "{{MYSQL_PORT}}",
+        "MYSQL_USER": "{{MYSQL_USER}}",
+        "MYSQL_PASS": "{{MYSQL_PASS}}",
+        "MYSQL_DB": "{{MYSQL_DB}}"
+      }
+    },
+    "project-server": {
+      "command": "{{PROJECT_ROOT}}/start-mcp.sh",
+      "args": [],
+      "env": {}
+    }
+  }
+}

@@ -8,13 +8,18 @@ export async function getSequelizePrompt(question: string) {
 
   const template = await loadSkillPrompt("sequelize-generator", "sequelize");
   if (!template) {
-      throw new Error("Failed to load sequelize prompt from skills");
+    throw new Error("Failed to load sequelize prompt from skills");
   }
 
   const promptTemplate = PromptTemplate.fromTemplate(template);
 
+  let databaseWarning = "";
+  if (!schema || schema.includes("Database not connected") || schema.startsWith("Error:")) {
+    databaseWarning = "IMPORTANT: The database is currently NOT connected. You must add the following comment to the very top of the generated code file:\n// [WARNING] Database not connected during code generation. Schema context is missing.\n";
+  }
+
   return await promptTemplate.format({
-    input: question,
+    input: question + "\n\n" + databaseWarning,
     table_info: schema,
   });
 }

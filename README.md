@@ -34,7 +34,7 @@ cp .env.example .env
 編輯 `.env` 檔案：
 ```env
 PORT=3000
-GOOGLE_API_KEY=你的_GEMINI_API_KEY
+GOOGLE_API_KEY=你的_GEMINI_API_KEY(相關功能已棄用可不填)
 DB_TYPE=mongo  # 'mysql' 或 'mongo'
 DB_HOST=localhost
 ...
@@ -59,7 +59,20 @@ JIRA_API_TOKEN=your_jira_api_token
 2.  將 `mcp_config.json.example` 中的 `mcpServers` 區塊內容，合併到該檔案中。
 3.  **重要**：請確保 `project-server` 中的 `DB_` 環境變數符合您的資料庫設定。
 
-#### 若您使用 Claude Desktop
+#### 自動設定 (推薦)
+
+本專案提供自動設定腳本，可自動偵測您的環境路徑並產生設定檔：
+
+```bash
+npm run setup:mcp
+```
+
+執行後，請依您的使用環境更新設定檔：
+
+- **Antigravity**: 複製內容至 `~/.gemini/antigravity/mcp_config.json`
+- **Claude Desktop**: 複製內容至 `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+#### 若您使用 Claude Desktop (手動設定)
 請在您的 Claude Desktop 設定檔中加入 (通常位於 `~/Library/Application Support/Claude/claude_desktop_config.json`)：
 
 ```json
@@ -100,6 +113,20 @@ npm run dev
 npm run mcp:test
 # 檢查 MCP Server 是否能正常啟動及連線資料庫
 ```
+
+### 如何確認 MCP Server 運行成功？
+
+若您是在 Cursor 或 Antigravity 中使用，可以透過以下方式確認：
+
+1.  **檢查 Log (最準確)**
+    ```bash
+    tail -f /tmp/mcp-server.log
+    ```
+    看到 `MCP Server is READY` 字樣表示啟動成功。
+
+2.  **檢查 UI 狀態**
+    - **Claude Desktop**: 設定內的 MCP Servers 應顯示綠燈 (Connected)。
+    - **Antigravity**: 在對話中嘗試詢問「列出目前的 collections」，看是否能成功調用 `list-collections` 工具。
 
 ---
 
