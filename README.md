@@ -72,19 +72,6 @@ npm run setup:mcp
 - **Antigravity**: 複製內容至 `~/.gemini/antigravity/mcp_config.json`
 - **Claude Desktop**: 複製內容至 `~/Library/Application Support/Claude/claude_desktop_config.json`
 
-#### 若您使用 Claude Desktop (手動設定)
-請在您的 Claude Desktop 設定檔中加入 (通常位於 `~/Library/Application Support/Claude/claude_desktop_config.json`)：
-
-```json
-{
-  "mcpServers": {
-    "testllm-server": {
-      "command": "/Users/derekyang/testllm/start-mcp.sh",
-      "args": []
-    }
-  }
-}
-```
 
 **可用 MCP 工具**:
 | 工具名稱 | 用途 |

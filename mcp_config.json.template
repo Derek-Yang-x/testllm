@@ -22,8 +22,11 @@
       }
     },
     "project-server": {
-      "command": "{{PROJECT_ROOT}}/start-mcp.sh",
-      "args": [],
+      "command": "{{NODE_PATH}}",
+      "args": [
+        "{{PROJECT_ROOT}}/node_modules/tsx/dist/cli.mjs",
+        "{{PROJECT_ROOT}}/src/mcp-server.ts"
+      ],
       "env": {}
     }
   }

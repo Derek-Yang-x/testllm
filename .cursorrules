@@ -3,7 +3,11 @@
 ## File Placement & Organization
 1. **Temporary Files**: Use the project `tmp/` directory for scratchpads, debug scripts, or temporary data. Do NOT place them in `src/`.
 3. **Source Code**: Only move files to `src/` after they have been verified.
-4. **Generated Code**: Place generated code (e.g., from MCP tools, models, controllers) in the `src/generated/` directory. This allows for easy cleanup and valid imports.
+4. **Generated Code**: Place generated code (e.g., from MCP tools, models, controllers, frontend) **EXCLUSIVELY** in the `src/generated/` directory.
+   - Models: `src/generated/models/`
+   - Routes: `src/generated/routes/`
+   - Frontend: `src/generated/frontend/`
+5. **Directory Creation**: If a target directory (especially `src/generated/*`) does not exist, **YOU MUST CREATE IT**. Do **NOT** fallback to other directories like `src/client` or `src/schemas`.
 
 ## MCP & Code Generation
 1. **Check Environment First**: Before generating any database-related code, **ALWAYS** check the `.env` file for `DB_TYPE`.

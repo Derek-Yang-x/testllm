@@ -65,6 +65,22 @@ async function main() {
     // Parse JSON to handle conditional logic
     const configObj = JSON.parse(configString);
 
+    // Inject environment variables into project-server to ensure portability
+    if (configObj.mcpServers && configObj.mcpServers['project-server']) {
+        configObj.mcpServers['project-server'].env = {
+            ...configObj.mcpServers['project-server'].env,
+            DB_TYPE: process.env.DB_TYPE || 'mysql',
+            DB_HOST: process.env.DB_HOST || 'localhost',
+            DB_PORT: process.env.DB_PORT || '3306',
+            DB_USER: process.env.DB_USER || 'root',
+            DB_PASS: process.env.DB_PASS || 'passwd',
+            DB_NAME: process.env.DB_NAME || 'cbs',
+            JIRA_URL: process.env.JIRA_URL || '',
+            JIRA_API_TOKEN: process.env.JIRA_API_TOKEN || '',
+            MONGODB_URI: process.env.MONGODB_URI || ''
+        };
+    }
+
     if (process.env.DB_TYPE === 'mongo') {
         console.log('ℹ️  DB_TYPE is mongo, removing MySQL MCP server config...');
         if (configObj.mcpServers && configObj.mcpServers.mysql) {
