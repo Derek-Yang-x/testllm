@@ -42,12 +42,20 @@ JIRA_URL=https://your-jira-domain.com
 JIRA_API_TOKEN=your_jira_api_token
 ```
 
+### ⚠️ 重要設定 (Antigravity / Agent)
+
+若您使用 Antigravity 或其他 AI Agent 來執行本專案的 Skill，請務必確認：
+
+- **必須關閉 "Enable Terminal Sandbox"**:
+  - 請在 Agent/IDE 設定中將 `Enable Terminal Sandbox` 選項**取消勾選 (關閉)**。
+  - **原因**：Skill 中的自動化腳本 (使用 `tsx` 等工具) 需要在系統暫存區 (`/var/folders/...`) 建立 IPC Pipe 通道。若開啟沙箱模式，系統會攔截此操作並回傳 `EPERM` 權限錯誤，導致所有 `check-env`、`get-schema` 等腳本無法執行。
+
 ### 2. 資料庫設定
 本專案支援自動切換資料庫模式。請在 `.env` 中設定 `DB_TYPE`：
 - `DB_TYPE=mysql`: 使用 TypeORM 連接 MySQL。
 - `DB_TYPE=mongo`: 使用 Mongoose 連接 MongoDB。
 
-### 3. 使用 MCP Server (AI 輔助開發)
+### 3. 使用 MCP Server (AI 輔助開發) (Optional)
 
 此專案本身即是一個 MCP Server。
 

@@ -16,12 +16,19 @@ This skill allows you to generate Ant Design UI components (specifically ProComp
           \`\`\`bash
           npx tsx .agent/skills/antd-generator/scripts/fetch-docs.ts
           \`\`\`
-        - Read the content of `resources/antd-docs.txt` and use it to fill the `{{context}}` placeholder.
+
 3.  **Generate Prompt**:
     - Run the intelligent prompt generator script. This script automatically retrieves relevant documentation based on keywords in the request.
       \`\`\`bash
       npx tsx .agent/skills/antd-generator/scripts/get-prompt.ts "Your detailed request here"
       \`\`\`
     - The script outputs the complete prompt. Use this output to query the LLM.
+    - **Add manual instruction to the final prompt**: "Use 2-space indentation."
 4.  **Save Files**:
-    - Save the generated component files to the `src/generated/pages/` directory.
+    - **Ensure Directories**: Run the following script to create necessary directories:
+      ```bash
+      npx tsx .agent/skills/project-utils/scripts/ensure-dirs.ts
+      ```
+    - Save the generated component files to the `src/generated/frontend/` directory.
+5.  **Format Code**:
+    - **CRITICAL**: Rely on the prompt instruction for correct 2-space indentation.

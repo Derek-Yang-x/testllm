@@ -1,13 +1,7 @@
 import "dotenv/config";
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { generateAntDPrompt } from "./antd.js";
-import { initializeDb, getSchema } from "./db.js";
-import { getMongoosePrompt } from "./mongoose.js";
-import { getSequelizePrompt } from "./sequelize.js";
-import mongoose from "mongoose";
-import { searchJiraIssues, getJiraIssue } from "./jira.js";
 
 // Initialize MCP Server
 const server = new McpServer({
@@ -15,9 +9,7 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
-// Define Prompt Template (Reused from sequelize.ts but adapted for MCP Prompt)
-
-// Register Prompt
+// Register Tools with Dynamic Imports
 server.registerPrompt(
   "generate-sequelize",
   {
@@ -26,20 +18,35 @@ server.registerPrompt(
     },
   },
   async ({ request }) => {
-    const question = request || "";
-    const promptText = await getSequelizePrompt(question);
+    try {
+      const { getSequelizePrompt } = await import("./sequelize.js");
+      const question = request || "";
+      const promptText = await getSequelizePrompt(question);
 
-    return {
-      messages: [
-        {
-          role: "user",
-          content: {
-            type: "text",
-            text: promptText,
+      return {
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: promptText,
+            },
           },
-        },
-      ],
-    };
+        ],
+      };
+    } catch (error) {
+      return {
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Error loading sequelize module: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          },
+        ],
+      };
+    }
   }
 );
 
@@ -58,7 +65,6 @@ server.registerTool(
   }
 );
 
-
 server.registerTool(
   "get-sequelize-prompt",
   {
@@ -67,17 +73,30 @@ server.registerTool(
     },
   },
   async ({ request }) => {
-    const question = request || "";
-    const promptText = await getSequelizePrompt(question);
+    try {
+      const { getSequelizePrompt } = await import("./sequelize.js");
+      const question = request || "";
+      const promptText = await getSequelizePrompt(question);
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: promptText,
-        },
-      ],
-    };
+      return {
+        content: [
+          {
+            type: "text",
+            text: promptText,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+      };
+    }
   }
 );
 
@@ -92,6 +111,7 @@ server.registerTool(
   async ({ request, modelContext }) => {
     console.error(`[Tool: generate-antd] Processing request: ${request}`);
     try {
+      const { generateAntDPrompt } = await import("./antd.js");
       const prompt = await generateAntDPrompt(request, modelContext);
 
       // Return the prompt text directly, DO NOT call LLM
@@ -128,6 +148,7 @@ server.registerTool(
   async ({ request }) => {
     console.error(`[Tool: generate-mongoose] Processing request: ${request}`);
     try {
+      const { getMongoosePrompt } = await import("./mongoose.js");
       // Just get the prompt, do NOT call LLM
       const prompt = await getMongoosePrompt(request);
 
@@ -159,6 +180,7 @@ server.registerTool(
   {},
   async () => {
     try {
+      const { initializeDb, getSchema } = await import("./db.js");
       await initializeDb();
       const schema = await getSchema();
       return {
@@ -193,6 +215,11 @@ server.registerTool(
   },
   async ({ collectionName, limit }) => {
     try {
+      const { initializeDb } = await import("./db.js");
+      // Need default import for mongoose to access 'connection' property if it's a default export from the lib
+      // OR import * as mongoose from "mongoose" if that's how it's used.
+      const mongoose = (await import("mongoose")).default;
+
       await initializeDb();
       // @ts-ignore
       const db = mongoose.connection.db;
@@ -233,6 +260,7 @@ server.registerTool(
   },
   async ({ jql, maxResults }) => {
     try {
+      const { searchJiraIssues } = await import("./jira.js");
       const data = await searchJiraIssues(jql, maxResults);
       // Format for display
       const issues = (data.issues || []).map((i: any) => {
@@ -274,6 +302,7 @@ server.registerTool(
   },
   async ({ issueKey }) => {
     try {
+      const { getJiraIssue } = await import("./jira.js");
       const data = await getJiraIssue(issueKey);
 
       // Simplify output for LLM/User consumption 
@@ -326,6 +355,8 @@ async function runServer() {
   (async () => {
     for (let i = 0; i < MAX_RETRIES; i++) {
       try {
+        // Dynamically import db to prevent startup crash if db.ts is broken
+        const { initializeDb } = await import("./db.js");
         await initializeDb();
         console.error(`[${new Date().toISOString()}] ✅ Sequelize MCP Server: Database connected successfully!`);
         console.error(`[${new Date().toISOString()}] 🚀 MCP Server is READY to accept requests.`);

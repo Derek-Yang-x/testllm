@@ -8,16 +8,47 @@ This skill allows you to generate Mongoose code (Model, Controller, Tests) based
 
 ## Instructions
 
-1.  **Understand the Request**: Identify the user's need for a new MongoDB collection or feature.
-2.  **Generate Code**: Use the prompt template in \`prompts/mongoose.md\`.
+1.  **Understand the Request**: Identify the user's need for a new MongoDB collection.
+    - **Indentation**: ALWAYS use 2 spaces for indentation.
+    - **Directory Structure**:
+      - Models: `src/generated/models/`
+      - Controllers: `src/generated/controllers/`
+      - Routes: `src/generated/routes/`
+      - Tests: `test/`
+
+    REQUIREMENTS:
+    - **General ESM Rules**:
+
+2.  **Get Context**:
+    - **Schema Inference**:
+        - Run the schema inference script (uses individual `DB_*` vars from `.env`):
+          \`\`\`bash
+          npx tsx .agent/skills/mongoose-generator/scripts/get-schema.ts <collection_name>
+          \`\`\`
+          (Replace `<collection_name>` with the target collection, or `all` if unsure, or skip if no DB access).
+        - Use the output to fill the `{{context}}` placeholder in the prompt.
+
+3.  **Generate Code**: Use the prompt template in `prompts/mongoose.md`.
+
     - Replace `{input}` with the user's request.
+    - **ALWAYS appends**: "Output code with strict 2-space indentation."
 3.  **Save Files**:
-    - Save the generated model, controller, and route code to `src/generated/` (in `models/`, `controllers/`, `routes/` subdirectories).
-    - Save the generated test code to `test/`.
-    - **Run Test**: Execute the generated test:
-      `NODE_OPTIONS=--experimental-vm-modules npx jest test/<generated-test-file>.test.ts`
-    - **Cleanup**:
-      - If the user rejects the result or declines *at any step* of the process: Run `rm test/<generated-test-file>.test.ts`.
-      - If the workflow **Completes Successfully**: Explicitly ask the user: "Do you want to keep the generated test file?"
-        - If **No**: Run `rm test/<generated-test-file>.test.ts`.
-        - If **Yes**: Keep the file.
+    - **Models**: `src/generated/models/`
+    - **Controllers**: `src/generated/controllers/`
+    - **Routes**: `src/generated/routes/`
+    - **Tests**: `tests/`
+    - **Ensure Directories**: Run the following script to create necessary directories:
+      ```bash
+      npx tsx .agent/skills/project-utils/scripts/ensure-dirs.ts
+      ```
+    - Save the generated content to these paths.
+4.  **Format Code**: 
+    - **CRITICAL**: The prompt MUST explicitly ask for "2-space indentation" to ensure correct formatting directly from the LLM.
+    - Verify that the output handling preserves this indentation.
+5.  **Run Test**: Execute the generated test:
+    `NODE_OPTIONS=--experimental-vm-modules npx jest tests/<generated-test-file>.test.ts`
+6.  **Cleanup**:
+    - If the user rejects the result or declines *at any step* of the process: Run `rm tests/<generated-test-file>.test.ts`.
+    - If the workflow **Completes Successfully**: Explicitly ask the user: "Do you want to keep the generated test file?"
+    - If **No**: Run `rm tests/<generated-test-file>.test.ts`.
+    - If **Yes**: Keep the file.

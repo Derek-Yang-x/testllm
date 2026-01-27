@@ -11,6 +11,9 @@ Current Context:
 - ODM: Mongoose
 - Framework: Express.js
 - Environment: Node.js (ESM), TypeScript
+- Schema Context:
+{{context}}
+
 
 Requirements:
 - **General ESM Rules**:
