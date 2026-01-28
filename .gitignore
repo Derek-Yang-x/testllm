@@ -42,3 +42,11 @@ src/generated/
 
 # Generator Resources
 .agent/skills/antd-generator/resources/
+
+# OpenSpec
+openspec/changes/*
+!openspec/changes/archive/
+
+
+# Resources
+**/resources/

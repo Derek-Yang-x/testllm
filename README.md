@@ -24,6 +24,9 @@
 ### 1. 安裝與設定
 
 ```bash
+# 安裝 OpenSpec CLI (全域安裝)
+npm install -g openspec
+
 # 安裝依賴
 npm install
 
