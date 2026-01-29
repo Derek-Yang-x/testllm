@@ -38,7 +38,7 @@ pids
 *.pid.lock
 
 # Generated Code
-src/generated/
+# src/generated/
 
 # Generator Resources
 .agent/skills/antd-generator/resources/

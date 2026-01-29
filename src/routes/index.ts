@@ -3,7 +3,7 @@ import { Router } from "express";
 import { genRouter } from "./deprecated.routes.js";
 
 
-import generatedRoutes from "../generated/routes/index.js";
+import { generatedRoutes } from "../generated/routes/index.js";
 
 const router = Router();
 

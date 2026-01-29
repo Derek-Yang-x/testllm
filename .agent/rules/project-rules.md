@@ -15,6 +15,14 @@ trigger: always_on
 6. **Indentation**: **ALWAYS** use 2 spaces for indentation in all generated files (TypeScript, JSON, etc.). Verify this before writing any file.
 7. **Verification**: Before writing any code, **ALWAYS** cross-reference the target path with these rules. If a plan suggests writing to `src/models` directly, **REJECT IT** and correct it to `src/generated/models`.
 
+## Data Model Standards
+1. **Mandatory Fields**: **ALL** database models (whether generated via skills, OpenSpec, or manually) **MUST** include the following fields:
+   - `isValid` (type: Boolean, default: true)
+   - `createdAt` (type: Date)
+   - `updatedAt` (type: Date)
+2. **Rejection Policy**: **REJECT** any generation plan or code that excludes these fields.
+
+
 ## MCP & Code Generation
 1. **Check Environment First**: Before generating any database-related code, **ALWAYS** check the `.env` file for `DB_TYPE`.
    - If `DB_TYPE=mongo`, use the `mongoose-generator` skill.
@@ -33,3 +41,8 @@ trigger: always_on
 ## Tool Safety & Reliability
 1. **Sequential Execution**: **NEVER** run `notify_user` in parallel with file operations (`write_to_file`, `replace_file_content`) or command executions.
 2. **Confirmation First**: Always wait for the file operation to report "Success" or "Created file" BEFORE calling `notify_user` to announce completion. This prevents data loss if the notification interrupts the write process.
+
+## TypeScript Standards
+1. **Type-Only Imports**: To comply with `verbatimModuleSyntax`, **ALWAYS** use `import type` for imports that are used exclusively as types.
+   - **Correct**: `import type { Request, Response } from 'express';`
+   - **Incorrect**: `import { Request, Response } from 'express';` (when used only as types)
