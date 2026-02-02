@@ -18,7 +18,7 @@ The system SHALL enforce permission checks on protected API endpoints.
 ### Requirement: Subordinate Access Permission
 The system SHALL control access to the subordinates API based on role and relationship.
 
-#### Scenario: Manager accessing own subordinates
+#### Scenario: Parent accessing own subordinates
 - **WHEN** an authenticated user requests subordinates for their OWN user ID
 - **THEN** the request is allowed
 
