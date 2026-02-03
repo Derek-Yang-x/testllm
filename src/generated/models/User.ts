@@ -1,5 +1,9 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 import type { IRole } from './Role.js';
+
+export interface IUserModel extends Model<IUser> {
+    getAllDescendants(userId: string | mongoose.Types.ObjectId): Promise<IUser[]>;
+}
 
 export interface IUser extends Document {
     email: string;
@@ -51,7 +55,43 @@ UserSchema.virtual('children', {
     foreignField: 'parentId'
 });
 
+UserSchema.statics.getAllDescendants = async function (
+    userId: string | mongoose.Types.ObjectId
+): Promise<IUser[]> {
+    const User = this as IUserModel;
+    const objectId = new mongoose.Types.ObjectId(userId);
+
+    const results = await User.aggregate([
+        {
+            $match: {
+                _id: objectId
+            }
+        },
+        {
+            $graphLookup: {
+                from: 'users',
+                startWith: '$_id',
+                connectFromField: '_id',
+                connectToField: 'parentId',
+                as: 'descendants',
+                restrictSearchWithMatch: { isValid: true }
+            }
+        },
+        {
+            $project: {
+                descendants: 1
+            }
+        }
+    ]);
+
+    if (!results || results.length === 0 || !results[0].descendants) {
+        return [];
+    }
+
+    return results[0].descendants;
+};
+
 UserSchema.set('toJSON', { virtuals: true });
 UserSchema.set('toObject', { virtuals: true });
 
-export default mongoose.model<IUser>('User', UserSchema);
+export default mongoose.model<IUser, IUserModel>('User', UserSchema);

@@ -29,6 +29,7 @@ logs/
 coverage/
 output/
 test/
+tests/
 tmp/
 
 # Runtime data

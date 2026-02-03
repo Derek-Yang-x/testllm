@@ -11,7 +11,7 @@ export class RoleController {
                     return res.status(401).json({ message: 'Unauthorized' });
                 }
 
-                const validation = await PermissionService.validatePermissions(userId, req.body.permissions);
+                const validation = await PermissionService.validatePermissionIds(userId, req.body.permissions);
                 if (!validation.valid) {
                     return res.status(403).json({
                         message: 'Insufficient permissions to assign the requested permissions',
@@ -76,11 +76,11 @@ export class RoleController {
                 if (!existingRole) return res.status(404).json({ message: 'Role not found' });
 
                 const newPermissions = req.body.permissions.filter(
-                    (p: string) => !existingRole.permissions.includes(p)
+                    (p: string) => !existingRole.permissions.some((ep: any) => ep.toString() === p)
                 );
 
                 if (newPermissions.length > 0) {
-                    const validation = await PermissionService.validatePermissions(userId, newPermissions);
+                    const validation = await PermissionService.validatePermissionIds(userId, newPermissions);
                     if (!validation.valid) {
                         return res.status(403).json({
                             message: 'Insufficient permissions to assign the requested permissions',
@@ -131,11 +131,11 @@ export class RoleController {
             if (!existingRole) return res.status(404).json({ message: 'Role not found' });
 
             const newPermissions = permissions.filter(
-                (p: string) => !existingRole.permissions.includes(p)
+                (p: string) => !existingRole.permissions.some((ep: any) => ep.toString() === p)
             );
 
             if (newPermissions.length > 0) {
-                const validation = await PermissionService.validatePermissions(userId, newPermissions);
+                const validation = await PermissionService.validatePermissionIds(userId, newPermissions);
                 if (!validation.valid) {
                     return res.status(403).json({
                         message: 'Insufficient permissions to assign the requested permissions',
