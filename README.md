@@ -27,6 +27,14 @@
 # 安裝 OpenSpec CLI (全域安裝)
 npm install -g openspec
 
+#### 安裝 MongoDB Shell (mongosh) - 用於執行資料庫腳本
+本專案的 `npm run db:exec` 依賴 `mongosh`。
+
+- **NPM (推薦)**:
+  ```bash
+  npm install -g mongosh
+  ```
+
 # 安裝依賴
 npm install
 

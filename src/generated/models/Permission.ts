@@ -31,24 +31,36 @@ PermissionSchema.statics.getAllDescendants = async function (
     permissionId: string | mongoose.Types.ObjectId
 ): Promise<IPermission[]> {
     const Permission = this as IPermissionModel;
+    const objectId = new mongoose.Types.ObjectId(permissionId);
 
-    const directChildren = await Permission.find({
-        parentId: permissionId,
-        isValid: true
-    });
+    const results = await Permission.aggregate([
+        {
+            $match: {
+                _id: objectId
+            }
+        },
+        {
+            $graphLookup: {
+                from: 'permissions',
+                startWith: '$_id',
+                connectFromField: '_id',
+                connectToField: 'parentId',
+                as: 'descendants',
+                restrictSearchWithMatch: { isValid: true }
+            }
+        },
+        {
+            $project: {
+                descendants: 1
+            }
+        }
+    ]);
 
-    if (directChildren.length === 0) {
+    if (!results || results.length === 0 || !results[0].descendants) {
         return [];
     }
 
-    const allDescendants: IPermission[] = [...directChildren];
-
-    for (const child of directChildren) {
-        const grandchildren = await Permission.getAllDescendants(child._id);
-        allDescendants.push(...grandchildren);
-    }
-
-    return allDescendants;
+    return results[0].descendants;
 };
 
 PermissionSchema.set('toJSON', { virtuals: true });

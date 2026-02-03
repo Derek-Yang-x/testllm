@@ -13,6 +13,7 @@ export interface IUser extends Document {
     loginAttempts?: number;
     lockUntil?: Date;
     lastPasswordChangeAt?: Date;
+    creatorId?: mongoose.Types.ObjectId | IUser;
     isValid: boolean;
     children?: IUser[];
     createdAt: Date;
@@ -31,6 +32,7 @@ const UserSchema: Schema = new Schema({
     loginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date },
     lastPasswordChangeAt: { type: Date },
+    creatorId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     isValid: { type: Boolean, default: true },
 }, { timestamps: true });
 

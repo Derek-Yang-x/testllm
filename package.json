@@ -7,7 +7,8 @@
     "dev": "nodemon",
     "setup:mcp": "tsx scripts/setup-mcp.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "mcp": "tsx src/mcp-server.ts"
+    "mcp": "tsx src/mcp-server.ts",
+    "db:exec": "tsx scripts/run-db-scripts.ts"
   },
   "keywords": [],
   "author": "",
