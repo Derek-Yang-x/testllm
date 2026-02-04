@@ -10,11 +10,11 @@ This skill allows you to generate Mongoose code (Model, Controller, Tests) based
 
 1.  **Understand the Request**: Identify the user's need for a new MongoDB collection.
     - **Indentation**: ALWAYS use 2 spaces for indentation.
-    - **Directory Structure**:
+    - **Default Directory Structure** (Adapt if user requests otherwise):
       - Models: `src/generated/models/`
       - Controllers: `src/generated/controllers/`
       - Routes: `src/generated/routes/`
-      - Tests: `test/`
+      - Tests: `tests/`
 
     REQUIREMENTS:
     - **General ESM Rules**:
@@ -33,13 +33,14 @@ This skill allows you to generate Mongoose code (Model, Controller, Tests) based
     - Replace `{input}` with the user's request.
     - **ALWAYS appends**: "Output code with strict 2-space indentation."
 3.  **Save Files**:
-    - **Models**: `src/generated/models/`
-    - **Controllers**: `src/generated/controllers/`
-    - **Routes**: `src/generated/routes/`
-    - **Tests**: `tests/`
-    - **Ensure Directories**: Run the following script to create necessary directories:
+    - **Target Directories** (Default to `src/generated/` unless user specifies otherwise):
+      - Models: `src/generated/models/`
+      - Controllers: `src/generated/controllers/`
+      - Routes: `src/generated/routes/`
+      - Tests: `tests/`
+    - **Ensure Directories**: Run the script with target directories:
       ```bash
-      npx tsx .agent/skills/project-utils/scripts/ensure-dirs.ts
+      npx tsx .agent/skills/project-utils/scripts/ensure-dirs.ts src/generated/models src/generated/controllers src/generated/routes tests
       ```
     - Save the generated content to these paths.
 4.  **Format Code**: 

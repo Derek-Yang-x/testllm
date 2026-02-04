@@ -22,13 +22,14 @@ This skill allows you to generate Sequelize code (Model, Controller, Tests) base
     - Replace `{table_info}` with the relevant database schema (if any).
     - **ALWAYS appends**: "Output code with strict 2-space indentation."
 4.  **Save Files**:
-    - **Models**: `src/generated/models/`
-    - **Controllers**: `src/generated/controllers/`
-    - **Routes**: `src/generated/routes/`
-    - **Tests**: `tests/`
-    - **Ensure Directories**: Run the following script to create necessary directories:
+    - **Target Directories** (Default to `src/generated/` unless user specifies otherwise):
+      - Models: `src/generated/models/`
+      - Controllers: `src/generated/controllers/`
+      - Routes: `src/generated/routes/`
+      - Tests: `tests/`
+    - **Ensure Directories**: Run the script with target directories:
       ```bash
-      npx tsx .agent/skills/project-utils/scripts/ensure-dirs.ts
+      npx tsx .agent/skills/project-utils/scripts/ensure-dirs.ts src/generated/models src/generated/controllers src/generated/routes tests
       ```
     - Save the generated content to these paths.
 5.  **Format Code**:

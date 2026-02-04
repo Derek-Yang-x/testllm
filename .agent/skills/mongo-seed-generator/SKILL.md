@@ -47,25 +47,26 @@ When the user asks to "create a strict collection" or "add schema validation", u
 1.  **Understand the Goal**: Does the user want to *create* a collection (Strict Schema), *update* an existing one (Migration), or *insert data* (Seeding/Examples)?
 2.  **Select & Adapt Template**:
     
+
     *   **Goal: Create Strict Collection** -> `templates/create-with-validator.js`
         *   Define `properties` and types (string, int, date, etc.).
         *   Set `required` fields.
-        *   Output as `generated/scripts/db/create-[collection]-collection.js`.
+        *   Suggested Output: `src/generated/scripts/db/create-[collection]-collection.js`.
 
     *   **Goal: Update Schema/Validator** -> `templates/update-validator.js`
         *   Use `collMod` command.
         *   Add new fields or constraints (min/max/enum).
-        *   Output as `generated/scripts/db/update-[collection]-schema.js`.
+        *   Suggested Output: `src/generated/scripts/db/update-[collection]-schema.js`.
 
     *   **Goal: Insert Data / Test Validation** -> `templates/insert-examples.js`
         *   Use this for seeding OR verifying schema rules.
         *   Auto-detect Replica Set (Universal Transaction support).
         *   Include both **Valid** (Commit) and **Invalid** (Rollback) examples if demonstrating validation.
-        *   Output as `generated/scripts/db/seed-[collection].js` or `generated/scripts/db/test-[collection]-validation.js`.
+        *   Suggested Output: `src/generated/scripts/db/seed-[collection].js` or `src/generated/scripts/db/test-[collection]-validation.js`.
 
     *   **Goal: Migrate Data (Rename/Transform)** -> `templates/migration.js`
         *   Use for field renames, type conversions, etc.
         *   Ensure `[Query Filter]` targets only documents needing update.
-        *   Output as `generated/scripts/db/migrate-[collection]-[description].js`.
+        *   Suggested Output: `src/generated/scripts/db/migrate-[collection]-[description].js`.
 
 3.  **Final Polish**: Ensure database name is correct (`use('...')`) and comments explain the schema rules.
