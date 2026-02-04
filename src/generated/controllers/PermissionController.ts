@@ -21,7 +21,8 @@ export class PermissionController {
                 .populate('parentId', 'name description')
                 .skip(skip)
                 .limit(limit)
-                .sort({ name: 1 });
+                .sort({ name: 1 })
+                .lean();
 
             const total = await Permission.countDocuments({ isValid: true });
 
@@ -43,7 +44,8 @@ export class PermissionController {
         try {
             const permission = await Permission.findById(req.params.id)
                 .populate('parentId', 'name description')
-                .populate('children');
+                .populate('children')
+                .lean();
 
             if (!permission) {
                 return res.status(404).json({ message: 'Permission not found' });
@@ -103,7 +105,7 @@ export class PermissionController {
             const rootPermissions = await Permission.find({
                 parentId: null,
                 isValid: true
-            }).populate('children');
+            }).populate('children').lean();
 
             res.json(rootPermissions);
         } catch (error) {

@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { PermissionController } from '../controllers/PermissionController.js';
+import { AuthMiddleware } from '../middleware/authMiddleware.js';
 
 const router = Router();
+
+router.use(AuthMiddleware.authenticate);
 
 router.post('/', PermissionController.create);
 router.get('/', PermissionController.findAll);

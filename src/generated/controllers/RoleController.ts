@@ -36,7 +36,8 @@ export class RoleController {
             const roles = await Role.find({ isValid: true })
                 .skip(skip)
                 .limit(limit)
-                .sort({ createdAt: -1 });
+                .sort({ createdAt: -1 })
+                .lean();
 
             const total = await Role.countDocuments({ isValid: true });
 
@@ -56,7 +57,7 @@ export class RoleController {
 
     static async findOne(req: Request, res: Response, next: NextFunction) {
         try {
-            const role = await Role.findById(req.params.id);
+            const role = await Role.findById(req.params.id).lean();
             if (!role) {
                 return res.status(404).json({ message: 'Role not found' });
             }

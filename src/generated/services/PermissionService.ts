@@ -71,7 +71,7 @@ export class PermissionService {
     /**
      * Validate a list of required permissions
      */
-    static async validatePermissions(
+    private static async validatePermissions(
         userId: string | Types.ObjectId,
         requestedPermissions: string[]
     ): Promise<{ valid: boolean; missing: string[] }> {

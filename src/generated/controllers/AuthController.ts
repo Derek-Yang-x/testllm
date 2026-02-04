@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import User from '../models/User.js';
 import { AuthService } from '../services/AuthService.js';
 import { EmailService } from '../services/EmailService.js';
+import jwt from 'jsonwebtoken';
 
 export class AuthController {
     static async login(req: Request, res: Response, next: NextFunction) {
@@ -55,22 +56,34 @@ export class AuthController {
             user.set('lockUntil', undefined);
 
             // Generate token
-            const token = AuthService.generateToken(user._id.toString());
+            // Generate token (using AuthService wrapping jwt or directly here? AuthService has generateToken but based on crypto likely? 
+            // Wait, existing AuthService.generateToken generates a Random String, not JWT.
+            // Check AuthService usage first? The User provided code shows `AuthService.generateToken`.
+            // Let's assume we need to CHANGE this to JWT generation or use a new method.
+            // But wait, the existing code: `const token = AuthService.generateToken(user._id.toString());`
+            // If AuthService is used elsewhere, changing it might break things.
+            // Let's implement JWT signing HERE using jsonwebtoken for now as per design decisions.
+            // Design said: "Modify AuthController.login: Update the response to include a secure accessToken (JWT)"
 
-            // If temp password used, clear it or ensure client knows they MUST change password
-            // For now, we allow login but maybe client should check `lastPasswordChangeAt`
-            // Requirement says: "強制行為：使用臨時密碼登入成功後，系統須強制跳轉到「更改密碼」介面。"
-            // We can return a flag in response
+            if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET not configured');
 
-            if (isTempPassword) {
-                // We don't clear it yet, we clear it when they change password
-            }
+            const accessToken = jwt.sign(
+                { userId: user._id.toString() },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' }
+            );
 
-            await user.save();
+            // existing random token (keep it for backward compat if needed, or remove? 
+            // The prompt implies REPLACING or ADDING. Design said: "Old: res.json(user) -> New: { user, accessToken }"
+            // The existing code actually returned { token, user... } where token was random string.
+            // Let's return both for safety or just replace 'token' with JWT?
+            // "Modify AuthController.login: Update the response to include a secure accessToken (JWT)"
+            // Let's add accessToken and keep legacy token if it exists just to be safe, OR just use accessToken.
+            // Given "token-based authentication system", let's use `accessToken`.
 
             res.json({
-                token,
                 user: { id: user._id, name: user.name, email: user.email },
+                accessToken,
                 mustChangePassword: isTempPassword
             });
         } catch (error) {

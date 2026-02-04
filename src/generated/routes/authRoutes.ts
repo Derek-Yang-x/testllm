@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 import { AuthController } from '../controllers/AuthController.js';
-import { verifyToken } from '../middleware/authMiddleware.js';
+import { AuthMiddleware } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -16,9 +16,9 @@ router.post('/forgot-password', AuthController.forgotPassword);
 // Looking at `src/llm.ts`, it might not have what we need. 
 // I'll implement a middleware in a new file `src/generated/middleware/auth.ts` later or inline it.
 
-// verifyToken imported at top
+// AuthMiddleware imported at top
 
-router.post('/change-password', verifyToken, AuthController.changePassword);
-router.post('/logout', verifyToken, AuthController.logout);
+router.post('/change-password', AuthMiddleware.authenticate, AuthController.changePassword);
+router.post('/logout', AuthMiddleware.authenticate, AuthController.logout);
 
 export default router;

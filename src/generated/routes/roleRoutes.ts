@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { RoleController } from '../controllers/RoleController.js';
+import { AuthMiddleware } from '../middleware/authMiddleware.js';
 
 const router = Router();
+
+router.use(AuthMiddleware.authenticate);
 
 router.post('/', RoleController.create);
 router.get('/', RoleController.findAll);

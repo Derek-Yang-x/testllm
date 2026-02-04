@@ -59,11 +59,11 @@
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.13.0",
     "reflect-metadata": "^0.2.2",
+    "resend": "^3.2.0",
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
     "typeorm": "^0.3.28",
-    "zod": "^3.25.0",
-    "resend": "^3.2.0"
+    "zod": "^3.25.0"
   },
   "nodemonConfig": {
     "watch": [
